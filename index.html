@@ -5,6 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>jWeather</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        async function geocodeLocation(query) {
+            const encoded = encodeURIComponent(query);
+            const url = `https://nominatim.openstreetmap.org/search?q=${encoded}&format=json&limit=1`;
+
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        'User-Agent': 'jWeatherApp/1.0 (your-email@example.com)'
+                    }
+                });
+                const data = await response.json();
+                if (data.length > 0) {
+                    return {
+                        latitude: parseFloat(data[0].lat),
+                        longitude: parseFloat(data[0].lon)
+                    };
+                } else {
+                    console.error("No geocoding results found for:", query);
+                    return null;
+                }
+            } catch (error) {
+                console.error("Geocoding error:", error);
+                return null;
+            }
+        }
+    </script>
     <style>
         /* Custom CSS */
         .nav-item {
