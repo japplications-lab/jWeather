@@ -1,86 +1,612 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>jWeather</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.4.1/dist/tailwind.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
-  <script defer src="script.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>jWeather</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom CSS */
+        .nav-item {
+            @apply text-white hover:text-gray-300 px-3 py-2 rounded-md text-sm font-medium;
+        }
+        .sub-nav-item {
+            @apply text-gray-700 hover:bg-gray-200 block px-3 py-2 rounded-md text-base font-medium;
+        }
+        .alert-severe-thunderstorm-watch { background-color: #FFFFE0; /* Light yellow */ }
+        .alert-severe-thunderstorm-warning { background-color: #FFD700; /* Darker yellow */ color: #000000; /* Contrasting text */ }
+        .alert-tornado-watch { background-color: #FFD2D2; /* Light red */ }
+        .alert-tornado-warning { background-color: #DC143C; /* Dark red */ color: #FFFFFF; /* White text */ }
+        .hidden-by-default { display: none; }
+    </style>
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans">
-  <!-- Header -->
-  <header class="bg-red-700 text-white px-6 py-4 shadow-md">
-    <div class="max-w-7xl mx-auto flex items-center justify-between">
-      <div class="flex items-center space-x-3">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="white" width="36" height="36">
-          <path d="M20 38c-2.2 0-4-1.8-4-4s1.8-4 4-4c.4 0 .9.1 1.3.2C22.6 27.2 26.4 24 31 24c4.4 0 8.1 2.9 9.5 6.9.5-.1 1.1-.1 1.5-.1 3.3 0 6 2.7 6 6s-2.7 6-6 6H20z"/>
-        </svg>
-        <span class="text-2xl font-bold tracking-tight">jWeather</span>
-      </div>
-      <nav>
-        <ul class="flex space-x-8 font-medium">
-          <li class="relative group cursor-pointer">
-            <span class="hover:underline">Severe Weather</span>
-            <ul class="absolute z-10 hidden group-hover:block mt-2 bg-white text-gray-900 shadow-lg rounded-md overflow-hidden w-52">
-              <li><a href="#" class="block px-4 py-2 hover:bg-gray-100">Outlook</a></li>
-              <li><a href="#" class="block px-4 py-2 hover:bg-gray-100">Mesoscale Discussions</a></li>
-              <li><a href="#" class="block px-4 py-2 hover:bg-gray-100">Parameters</a></li>
-              <li><a href="#" class="block px-4 py-2 hover:bg-gray-100">Storm Reports</a></li>
-              <li><a href="#" class="block px-4 py-2 hover:bg-gray-100">Severe Weather 101</a></li>
-            </ul>
-          </li>
-          <li><a href="#" class="hover:underline">Tropical</a></li>
-        </ul>
-      </nav>
-    </div>
-  </header>
+<body class="bg-gray-100">
 
-  <!-- Card 1: Search and Current Conditions -->
-  <section class="max-w-5xl mx-auto px-6 py-6 bg-white shadow-lg rounded-2xl mt-8">
-    <h2 class="text-2xl font-semibold mb-4">Check Your Local Weather</h2>
-    <div class="flex flex-col md:flex-row gap-3 mb-4">
-      <input type="text" id="locationInput" placeholder="Enter city, state or ZIP" class="flex-1 p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-      <button onclick="fetchWeather()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-md transition duration-150 shadow">Search</button>
-    </div>
-    <div id="current-conditions" class="text-lg space-y-2">
-      <!-- Populated dynamically -->
-    </div>
-  </section>
+    <header class="bg-red-600 shadow-lg">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <span class="text-white text-xl font-bold">
+                            <svg class="inline-block h-8 w-8 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"></path></svg>
+                            jWeather
+                        </span>
+                    </div>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <div class="relative group">
+                            <a href="#" class="nav-item">Severe Weather
+                                <svg class="inline-block h-4 w-4" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                            </a>
+                            <div class="absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
+                                <div class="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
+                                    <a href="#" class="sub-nav-item" role="menuitem">Outlook</a>
+                                    <a href="#" class="sub-nav-item" role="menuitem">Mesoscale Discussions</a>
+                                    <a href="#" class="sub-nav-item" role="menuitem">Parameters</a>
+                                    <a href="#" class="sub-nav-item" role="menuitem">Storm Reports</a>
+                                    <a href="#" class="sub-nav-item" role="menuitem">Severe Weather 101</a>
+                                </div>
+                            </div>
+                        </div>
+                        <a href="#" class="nav-item">Tropical</a>
+                    </div>
+                </div>
+                <div class="-mr-2 flex md:hidden">
+                    <button type="button" class="bg-red-700 inline-flex items-center justify-center p-2 rounded-md text-white hover:text-gray-300 hover:bg-red-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white" aria-controls="mobile-menu" aria-expanded="false" id="mobile-menu-button">
+                        <span class="sr-only">Open main menu</span>
+                        <svg class="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                        <svg class="hidden h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div class="md:hidden hidden" id="mobile-menu">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                <div class="relative group">
+                    <a href="#" class="block text-white hover:text-gray-300 px-3 py-2 rounded-md text-base font-medium">Severe Weather
+                         <svg class="inline-block h-4 w-4" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                    </a>
+                     <div class="mt-2 w-full rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
+                        <div class="py-1">
+                            <a href="#" class="sub-nav-item">Outlook</a>
+                            <a href="#" class="sub-nav-item">Mesoscale Discussions</a>
+                            <a href="#" class="sub-nav-item">Parameters</a>
+                            <a href="#" class="sub-nav-item">Storm Reports</a>
+                            <a href="#" class="sub-nav-item">Severe Weather 101</a>
+                        </div>
+                    </div>
+                </div>
+                <a href="#" class="block text-white hover:text-gray-300 px-3 py-2 rounded-md text-base font-medium">Tropical</a>
+            </div>
+        </div>
+    </header>
 
-  <!-- Card 2: Active Alerts -->
-  <section class="max-w-5xl mx-auto px-6 py-6 bg-white shadow-lg rounded-2xl mt-8 hidden" id="alerts-card">
-    <h2 class="text-2xl font-semibold mb-2">Active Alerts</h2>
-    <hr class="mb-4 border-gray-300">
-    <div id="alerts-list" class="space-y-3">
-      <!-- Alerts go here -->
-    </div>
-  </section>
+    <main class="container mx-auto p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="md:col-span-2 space-y-4">
+            <section id="search-current-conditions" class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-2xl font-semibold mb-4">Search Location</h2>
+                <div class="flex space-x-2 mb-4">
+                    <input type="text" id="location-search" placeholder="Enter City, State or Zip Code" class="flex-grow p-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500">
+                    <button id="search-button" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-md">Search</button>
+                </div>
+                <div id="current-conditions-content" class="mt-4">
+                    </div>
+            </section>
 
-  <!-- Card 3: 5/7 Day Forecast -->
-  <section class="max-w-5xl mx-auto px-6 py-6 bg-white shadow-lg rounded-2xl mt-8 hidden" id="forecast-card">
-    <div class="flex items-center justify-between">
-      <h2 class="text-2xl font-semibold">5-Day Forecast</h2>
-      <button onclick="toggleForecastDays()" class="text-blue-600 font-medium hover:underline">+ Expand to 7</button>
-    </div>
-    <div id="forecast-days" class="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-      <!-- Forecast content here -->
-    </div>
-  </section>
+            <section id="active-alerts-card" class="bg-white p-6 rounded-lg shadow-md hidden-by-default">
+                <h2 class="text-xl font-semibold mb-2">Active Alerts</h2>
+                <hr class="mb-4">
+                <div id="alerts-content">
+                    </div>
+            </section>
 
-  <!-- Card 4: Radar -->
-  <section class="max-w-5xl mx-auto px-6 py-6 bg-white shadow-lg rounded-2xl mt-8 hidden" id="radar-card">
-    <h2 class="text-2xl font-semibold mb-4">Live Reflective Radar</h2>
-    <iframe id="windy-embed" width="100%" height="450" frameborder="0" class="rounded-md shadow-inner"></iframe>
-  </section>
+            <section id="forecast-card" class="bg-white p-6 rounded-lg shadow-md hidden-by-default">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold">5-Day Forecast</h2>
+                    <button id="toggle-forecast-days" class="text-sm text-red-500 hover:underline">Show 7-Day</button>
+                </div>
+                <div id="forecast-content" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 text-center">
+                    </div>
+                 <div id="seven-day-forecast-content" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2 text-center mt-4 hidden">
+                    </div>
+            </section>
 
-  <!-- Card 5: News -->
-  <section class="max-w-5xl mx-auto px-6 py-6 bg-white shadow-lg rounded-2xl mt-8" id="weather-news">
-    <h2 class="text-2xl font-semibold mb-4">Latest US Weather News</h2>
-    <div id="news-content" class="space-y-2">
-      <!-- News articles or headlines go here -->
-    </div>
-  </section>
+            <section id="radar-card" class="bg-white p-6 rounded-lg shadow-md hidden-by-default">
+                <h2 class="text-xl font-semibold mb-4">Reflective Radar</h2>
+                <div id="windy-radar-embed" class="aspect-w-16 aspect-h-9">
+                    </div>
+            </section>
+        </div>
+
+        <div class="md:col-span-1 space-y-4">
+            <section id="weather-news" class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-semibold mb-4">Latest US Weather News</h2>
+                <div class="space-y-3">
+                    <div class="border-b pb-2">
+                        <h3 class="font-semibold text-red-600 hover:underline cursor-pointer">Major Storm System Developing in the Midwest</h3>
+                        <p class="text-sm text-gray-600">Forecasters are tracking a significant weather event expected to bring heavy rain and strong winds...</p>
+                    </div>
+                    <div class="border-b pb-2">
+                        <h3 class="font-semibold text-red-600 hover:underline cursor-pointer">Heatwave Continues to Grip the Southwest</h3>
+                        <p class="text-sm text-gray-600">Record-breaking temperatures are expected for the third consecutive day...</p>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-red-600 hover:underline cursor-pointer">Tropical Update: New Disturbance Monitored</h3>
+                        <p class="text-sm text-gray-600">A tropical wave in the Atlantic is showing signs of organization...</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer class="bg-gray-800 text-white text-center p-4 mt-8">
+        <p>&copy; <span id="current-year"></span> jWeather. All rights reserved.</p>
+    </footer>
+
+    <script>
+        // --- CONFIGURATION ---
+        const NWS_API_BASE_URL = "https://api.weather.gov";
+        // Note: For Windy, you might need an API key for some advanced embedding or more control.
+        // For basic embedding, the URL parameters are key.
+
+        // --- DOM ELEMENTS ---
+        const searchButton = document.getElementById('search-button');
+        const locationSearchInput = document.getElementById('location-search');
+        const currentConditionsContent = document.getElementById('current-conditions-content');
+        const alertsCard = document.getElementById('active-alerts-card');
+        const alertsContent = document.getElementById('alerts-content');
+        const forecastCard = document.getElementById('forecast-card');
+        const forecastContent = document.getElementById('forecast-content');
+        const sevenDayForecastContent = document.getElementById('seven-day-forecast-content');
+        const toggleForecastButton = document.getElementById('toggle-forecast-days');
+        const radarCard = document.getElementById('radar-card');
+        const windyRadarEmbed = document.getElementById('windy-radar-embed');
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        document.getElementById('current-year').textContent = new Date().getFullYear();
+
+        // --- STATE ---
+        let currentLatitude = null;
+        let currentLongitude = null;
+        let showingSevenDayForecast = false;
+
+        // --- EVENT LISTENERS ---
+        searchButton.addEventListener('click', handleLocationSearch);
+        locationSearchInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                handleLocationSearch();
+            }
+        });
+
+        toggleForecastButton.addEventListener('click', () => {
+            showingSevenDayForecast = !showingSevenDayForecast;
+            if (showingSevenDayForecast) {
+                sevenDayForecastContent.classList.remove('hidden');
+                toggleForecastButton.textContent = 'Show 5-Day';
+                // You might need to re-fetch or ensure you have 7 days of data if not already fetched
+                displayForecast(cachedForecastData, true); // Assuming cachedForecastData holds the full 7-day data
+            } else {
+                sevenDayForecastContent.classList.add('hidden');
+                toggleForecastButton.textContent = 'Show 7-Day';
+                displayForecast(cachedForecastData, false); // Display only 5 days
+            }
+        });
+
+        mobileMenuButton.addEventListener('click', () => {
+            const isExpanded = mobileMenuButton.getAttribute('aria-expanded') === 'true' || false;
+            mobileMenuButton.setAttribute('aria-expanded', !isExpanded);
+            mobileMenu.classList.toggle('hidden');
+            // Toggle icons
+            mobileMenuButton.querySelectorAll('svg').forEach(icon => icon.classList.toggle('hidden'));
+        });
+
+        // --- API CALLS AND DATA HANDLING ---
+
+        async function handleLocationSearch() {
+            const query = locationSearchInput.value.trim();
+            if (!query) return;
+
+            // Reset UI
+            currentConditionsContent.innerHTML = '<p>Loading current conditions...</p>';
+            alertsContent.innerHTML = '<p>Loading alerts...</p>';
+            forecastContent.innerHTML = '<p>Loading forecast...</p>';
+            sevenDayForecastContent.innerHTML = '';
+            windyRadarEmbed.innerHTML = '';
+            hideOptionalCards();
+
+            try {
+                // Step 1: Geocode location (if not a zip code that NWS can directly use for points)
+                // This often requires a separate geocoding API or a smart NWS points lookup.
+                // For simplicity, we'll assume a direct NWS points lookup or a known lat/lon.
+                // A robust solution would use a geocoding service to get lat/lon from city/state.
+                // For now, let's assume the NWS points endpoint can handle a zip or city,state search.
+
+                // The NWS API first needs a point (latitude,longitude) to get station and forecast zone info.
+                // Example: https://api.weather.gov/points/{latitude},{longitude}
+                // If you only have a zip, you'd ideally use a geocoder first.
+                // Some geocoders: OpenCage, Nominatim (check terms of use).
+                // For this example, let's simulate getting lat/lon. A real app needs a geocoding step.
+                // For a US zip code, you might directly query a service that maps zips to lat/lon.
+
+                // Let's assume a placeholder function for geocoding
+                const locationData = await geocodeLocation(query);
+                if (!locationData) {
+                    currentConditionsContent.innerHTML = '<p class="text-red-500">Could not find location. Please try a different search.</p>';
+                    return;
+                }
+                currentLatitude = locationData.latitude;
+                currentLongitude = locationData.longitude;
+
+                const pointsResponse = await fetch(`${NWS_API_BASE_URL}/points/${currentLatitude},${currentLongitude}`);
+                if (!pointsResponse.ok) {
+                    throw new Error(`NWS points API error: ${pointsResponse.status}`);
+                }
+                const pointsData = await pointsResponse.json();
+
+                const forecastUrl = pointsData.properties.forecast;
+                const forecastHourlyUrl = pointsData.properties.forecastHourly; // For current conditions
+                const observationStationsUrl = pointsData.properties.observationStations;
+                const countyWarningArea = pointsData.properties.cwa; // For alerts
+                const gridX = pointsData.properties.gridX;
+                const gridY = pointsData.properties.gridY;
+
+
+                // Fetch Current Conditions (using latest observation from a station)
+                const stationsResponse = await fetch(observationStationsUrl);
+                const stationsData = await stationsResponse.json();
+                if (stationsData.features && stationsData.features.length > 0) {
+                    const latestObservationUrl = `${stationsData.features[0].id}/observations/latest`; // Or loop to find closest station
+                    const observationResponse = await fetch(latestObservationUrl);
+                    if (observationResponse.ok) {
+                        const observationData = await observationResponse.json();
+                        displayCurrentConditions(observationData.properties);
+                    } else {
+                         // Fallback to hourly forecast for current-ish conditions if direct observation fails
+                        const hourlyResponse = await fetch(forecastHourlyUrl);
+                        const hourlyData = await hourlyResponse.json();
+                        if (hourlyData.properties && hourlyData.properties.periods && hourlyData.properties.periods.length > 0) {
+                             displayCurrentConditions(hourlyData.properties.periods[0], true); // true indicates it's from forecast
+                        } else {
+                            currentConditionsContent.innerHTML = '<p>Could not fetch current conditions.</p>';
+                        }
+                    }
+                } else {
+                    currentConditionsContent.innerHTML = '<p>No observation stations found.</p>';
+                }
+
+
+                // Fetch Alerts
+                // Alerts by zone: https://api.weather.gov/alerts/active/zone/{zoneId}
+                // Or by county: https://api.weather.gov/alerts/active/county/{countyCode}
+                // Or by point: https://api.weather.gov/alerts/active?point={lat},{lon}
+                const alertsResponse = await fetch(`${NWS_API_BASE_URL}/alerts/active?point=${currentLatitude},${currentLongitude}`);
+                const alertsData = await alertsResponse.json();
+                displayAlerts(alertsData.features);
+
+                // Fetch Forecast
+                const forecastResponse = await fetch(forecastUrl);
+                const forecastData = await forecastResponse.json();
+                cachedForecastData = forecastData.properties.periods; // Cache for 5/7 day toggle
+                displayForecast(cachedForecastData);
+
+                // Embed Radar
+                displayRadar(currentLatitude, currentLongitude);
+
+                // Show cards now that data is (being) fetched
+                showOptionalCards();
+
+            } catch (error) {
+                console.error("Error fetching weather data:", error);
+                currentConditionsContent.innerHTML = `<p class="text-red-500">Error fetching weather data: ${error.message}. Check console.</p>`;
+                hideOptionalCards();
+            }
+        }
+
+        // Placeholder for geocoding - REPLACE WITH A REAL GEOCODING SERVICE
+        async function geocodeLocation(query) {
+            // This is a very basic placeholder.
+            // For US zip codes, you might find a simple API or local lookup.
+            // For city, state, a full geocoding service (e.g., Nominatim, OpenCage, Google Geocoding API) is needed.
+            // Example (VERY SIMPLIFIED - DO NOT USE IN PRODUCTION AS IS):
+            console.warn("Using placeholder geocoding. Replace with a robust solution.");
+            if (/^\d{5}$/.test(query)) { // Basic zip code check
+                // In a real app, map zip to lat/lon via an API or local data source
+                // Example: If zip is 90210, return its lat/lon
+                if (query === "90210") return { latitude: 34.0901, longitude: -118.4065 };
+                if (query === "60606") return { latitude: 41.8838, longitude: -87.6392 }; // Chicago Loop
+                // Add more known zips or use a small lookup table for demo
+                console.error(`ZIP code ${query} not in placeholder geocoder.`);
+                 alert(`Developer Note: ZIP code ${query} not in placeholder. Add it or use a real geocoder.`);
+                return null;
+
+            } else if (query.includes(',')) { // Basic city, state check
+                const parts = query.split(',');
+                const city = parts[0].trim();
+                const state = parts[1].trim();
+                // Again, use a real geocoding service. This is a fake lookup.
+                if (city.toLowerCase() === "new york" && state.toLowerCase() === "ny") return { latitude: 40.7128, longitude: -74.0060 };
+                if (city.toLowerCase() === "los angeles" && state.toLowerCase() === "ca") return { latitude: 34.0522, longitude: -118.2437 };
+                if (city.toLowerCase() === "chicago" && state.toLowerCase() === "il") return { latitude: 41.8781, longitude: -87.6298 };
+                console.error(`City, State "${query}" not in placeholder geocoder.`);
+                alert(`Developer Note: City, State "${query}" not in placeholder. Add it or use a real geocoder.`);
+                return null;
+            }
+            console.error("Could not parse query for placeholder geocoding:", query);
+            return null;
+        }
+
+
+        function displayCurrentConditions(conditions, isForecast = false) {
+            if (!conditions) {
+                currentConditionsContent.innerHTML = '<p>Current conditions data not available.</p>';
+                return;
+            }
+            // NWS API gives temp in Celsius, wind speed in km/h by default from observations.
+            // Hourly forecast often has units specified or implies them.
+            // Need to check `unitCode` for values and convert if necessary.
+            // Example for observation: conditions.temperature.value (Celsius), conditions.windSpeed.value (m/s usually)
+            // Example for hourly forecast: conditions.temperature (F or C), conditions.windSpeed (e.g. "5 mph")
+
+            let tempF, windMph, humidityPercent, dewPointF;
+            let iconUrl = conditions.icon || 'https://via.placeholder.com/64?text=N/A'; // Default icon
+            let conditionText = isForecast ? conditions.shortForecast : (conditions.textDescription || "N/A");
+
+
+            if (isForecast) { // Data from hourly forecast period
+                tempF = conditions.temperature; // Assuming it's already in F as requested. Verify API output.
+                // Wind speed from forecast might be like "10 to 15 mph"
+                windMph = conditions.windSpeed; // This is often a string like "5 mph" or "5 to 10 mph"
+                humidityPercent = conditions.relativeHumidity ? conditions.relativeHumidity.value : "N/A"; // Check structure
+                dewPointF = conditions.dewpoint ? (conditions.dewpoint.value * 9/5 + 32).toFixed(0) : "N/A"; // Dewpoint often in C
+                iconUrl = conditions.icon;
+            } else { // Data from observation station
+                tempF = conditions.temperature?.value !== null && conditions.temperature?.unitCode?.includes("degC")
+                    ? (conditions.temperature.value * 9/5 + 32).toFixed(0)
+                    : (conditions.temperature?.value || "N/A"); // Assuming F if not C, or N/A
+
+                windMph = conditions.windSpeed?.value !== null && conditions.windSpeed?.unitCode?.includes("m_s") // m/s to mph
+                    ? (conditions.windSpeed.value * 2.23694).toFixed(0)
+                    : (conditions.windSpeed?.value || "N/A"); // Assuming mph if not m/s, or N/A
+
+                humidityPercent = conditions.relativeHumidity?.value !== null
+                    ? conditions.relativeHumidity.value.toFixed(0)
+                    : "N/A";
+
+                dewPointF = conditions.dewpoint?.value !== null && conditions.dewpoint?.unitCode?.includes("degC")
+                    ? (conditions.dewpoint.value * 9/5 + 32).toFixed(0)
+                    : (conditions.dewpoint?.value || "N/A"); // Assuming F if not C, or N/A
+
+                // For icon from observation, it might not be directly available.
+                // NWS icons are more reliably sourced from the forecast API.
+                // You might need a mapping from textDescription to an icon if observation API doesn't give one.
+                // For now, try to use a generic one or a placeholder.
+            }
+
+
+            currentConditionsContent.innerHTML = `
+                <div class="flex items-center mb-2">
+                    <img src="${iconUrl}" alt="${conditionText}" class="inline-block w-16 h-16 mr-3" onerror="this.src='https://via.placeholder.com/64?text=ICON'; this.alt='Icon failed to load';">
+                    <div>
+                        <p class="text-4xl font-bold">${tempF}°F</p>
+                        <p class="text-lg text-gray-700">${conditionText}</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2 text-sm">
+                    <div><strong>Wind:</strong> ${windMph}${typeof windMph === 'number' ? ' mph' : ''}</div>
+                    <div><strong>Humidity:</strong> ${humidityPercent}${humidityPercent !== "N/A" ? '%' : ''}</div>
+                    <div><strong>Dew Point:</strong> ${dewPointF}${dewPointF !== "N/A" ? '°F' : ''}</div>
+                </div>
+            `;
+        }
+
+        function displayAlerts(alerts) {
+            alertsContent.innerHTML = ''; // Clear previous alerts
+            if (!alerts || alerts.length === 0) {
+                alertsContent.innerHTML = `
+                    <div class="flex items-center text-green-600">
+                        <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        No active alerts for this location.
+                    </div>`;
+                return;
+            }
+
+            alerts.forEach(alertFeature => {
+                const alert = alertFeature.properties;
+                let alertClass = 'bg-gray-200 border border-gray-300'; // Default
+                const event = alert.event.toLowerCase();
+
+                if (event.includes("severe thunderstorm watch")) alertClass = 'alert-severe-thunderstorm-watch';
+                else if (event.includes("severe thunderstorm warning")) alertClass = 'alert-severe-thunderstorm-warning';
+                else if (event.includes("tornado watch")) alertClass = 'alert-tornado-watch';
+                else if (event.includes("tornado warning")) alertClass = 'alert-tornado-warning';
+                // Add more alert type checks and classes as needed
+
+                const ends = alert.ends ? new Date(alert.ends).toLocaleString() : 'N/A';
+                // Sanitize description and instruction to prevent XSS if directly inserting HTML.
+                // For now, we'll use textContent for the expandable part.
+
+                const alertDiv = document.createElement('div');
+                alertDiv.className = `p-3 mb-3 rounded-md shadow ${alertClass}`;
+                alertDiv.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="font-bold text-lg">${alert.event}</h3>
+                            <p class="text-sm">Effective: ${new Date(alert.effective).toLocaleString()}</p>
+                            <p class="text-sm">Expires: ${ends}</p>
+                            <p class="text-sm">Severity: ${alert.severity} | Urgency: ${alert.urgency} | Certainty: ${alert.certainty}</p>
+                        </div>
+                        <button class="text-sm underline hover:opacity-75 focus:outline-none more-detail-button whitespace-nowrap ml-2">More Detail</button>
+                    </div>
+                    <div class="alert-full-text mt-3 pt-3 border-t border-gray-400 border-opacity-50 hidden break-words whitespace-pre-wrap">
+                        <h4 class="font-semibold">Description:</h4>
+                        <p class="text-sm">${alert.description || 'No description provided.'}</p>
+                        ${alert.instruction ? `<h4 class="font-semibold mt-2">Instructions:</h4><p class="text-sm">${alert.instruction}</p>` : ''}
+                    </div>
+                `;
+                alertsContent.appendChild(alertDiv);
+            });
+
+            // Add event listeners for new "More Detail" buttons
+            document.querySelectorAll('.more-detail-button').forEach(button => {
+                button.addEventListener('click', function() {
+                    const fullTextDiv = this.closest('div').nextElementSibling;
+                    fullTextDiv.classList.toggle('hidden');
+                    this.textContent = fullTextDiv.classList.contains('hidden') ? 'More Detail' : 'Less Detail';
+                });
+            });
+        }
+
+        let cachedForecastData = []; // To store all forecast periods for 5/7 day toggle
+
+        function displayForecast(periods, showSevenDays = false) {
+            forecastContent.innerHTML = ''; // Clear 5-day
+            sevenDayForecastContent.innerHTML = ''; // Clear 7-day extension
+
+            if (!periods || periods.length === 0) {
+                forecastContent.innerHTML = '<p>Forecast data not available.</p>';
+                return;
+            }
+
+            // NWS often returns 14 periods (7 days, day/night). We need to consolidate.
+            const dailyForecasts = consolidateForecastPeriods(periods);
+
+            const daysToShow = showSevenDays ? 7 : 5;
+            const targetElement = forecastContent; // Always populate the main 5-day container first
+            let additionalDaysElement = sevenDayForecastContent; // For days 6 and 7
+
+            dailyForecasts.slice(0, daysToShow).forEach((day, index) => {
+                const dayDiv = document.createElement('div');
+                dayDiv.className = 'p-3 border rounded-lg shadow-sm bg-gray-50';
+                dayDiv.innerHTML = `
+                    <p class="font-semibold text-md">${day.name}</p>
+                    <img src="${day.icon}" alt="${day.shortForecast}" title="${day.detailedForecast}" class="w-12 h-12 sm:w-16 sm:h-16 mx-auto my-1" onerror="this.src='https://via.placeholder.com/64?text=ICON';">
+                    <p class="text-lg font-medium">${day.highTemp !== null ? day.highTemp + '&deg;F' : (day.temp !== null ? day.temp + '&deg;F' : '--')}</p>
+                    ${day.lowTemp !== null ? `<p class="text-sm text-gray-600">${day.lowTemp}&deg;F Low</p>` : ''}
+                    <p class="text-xs text-gray-500 mt-1">${day.shortForecast}</p>
+                `;
+                if (index < 5) {
+                    targetElement.appendChild(dayDiv);
+                } else {
+                    additionalDaysElement.appendChild(dayDiv); // Days 6 and 7
+                }
+            });
+
+             if (showSevenDays) {
+                toggleForecastButton.textContent = 'Show 5-Day';
+                sevenDayForecastContent.classList.remove('hidden');
+            } else {
+                toggleForecastButton.textContent = 'Show 7-Day';
+                sevenDayForecastContent.classList.add('hidden');
+            }
+            if (dailyForecasts.length < 6) { // Not enough data for 7 days
+                 toggleForecastButton.classList.add('hidden'); // Hide toggle if less than 6 days
+            } else {
+                 toggleForecastButton.classList.remove('hidden');
+            }
+        }
+
+        function consolidateForecastPeriods(periods) {
+            const daily = {};
+            periods.forEach(period => {
+                // Attempt to get a consistent date part for grouping
+                const dayName = period.name.split(" ")[0]; // "Tonight" -> "Tonight", "Monday" -> "Monday"
+                const dateStr = new Date(period.startTime).toLocaleDateString(undefined, { weekday: 'long' });
+
+                if (!daily[dateStr]) {
+                    daily[dateStr] = {
+                        name: period.isDaytime ? period.name : dateStr, // Prefer named day like "Monday" if available
+                        date: dateStr,
+                        dayForecast: null,
+                        nightForecast: null,
+                        icon: period.icon, // Default to first period's icon
+                        shortForecast: period.shortForecast, // Default
+                        detailedForecast: period.detailedForecast,
+                        highTemp: null,
+                        lowTemp: null,
+                        temp: null, // General temp if not clearly high/low
+                    };
+                }
+
+                if (period.isDaytime) {
+                    daily[dateStr].dayForecast = period.shortForecast;
+                    daily[dateStr].highTemp = period.temperature;
+                    daily[dateStr].icon = period.icon; // Prefer daytime icon
+                    daily[dateStr].shortForecast = period.shortForecast;
+                    daily[dateStr].detailedForecast = period.detailedForecast;
+                    if (daily[dateStr].name.includes("Night")) daily[dateStr].name = dateStr; // Correct name if it was initially a night period
+                } else { // Nighttime
+                    daily[dateStr].nightForecast = period.shortForecast;
+                    daily[dateStr].lowTemp = period.temperature;
+                    // If only night data is available for the first entry, use its icon/shortForecast
+                    if (!daily[dateStr].dayForecast) {
+                        daily[dateStr].icon = period.icon;
+                        daily[dateStr].shortForecast = period.shortForecast;
+                        daily[dateStr].detailedForecast = period.detailedForecast;
+                        daily[dateStr].name = period.name; // e.g. "Tonight"
+                    }
+                }
+                // If highTemp is null but temp is not, it might be a single temp for the period
+                if (daily[dateStr].highTemp === null && period.temperature !== null && period.isDaytime) {
+                    daily[dateStr].temp = period.temperature;
+                } else if (daily[dateStr].lowTemp === null && period.temperature !== null && !period.isDaytime) {
+                     daily[dateStr].temp = period.temperature; // Use general temp if low is not set explicitly
+                }
+            });
+
+            // Convert object to array and ensure a primary short forecast
+            return Object.values(daily).map(d => {
+                if (!d.shortForecast && d.dayForecast) d.shortForecast = d.dayForecast;
+                if (!d.shortForecast && d.nightForecast) d.shortForecast = d.nightForecast; // Fallback to night if no day
+                if (d.name.includes("Night") && d.dayForecast) { // If named like "Tonight" but we have a day forecast, use the date string
+                    d.name = d.date;
+                }
+                // Ensure highTemp has a value if temp is available and highTemp is null (for day time)
+                if (d.highTemp === null && d.temp !== null && (d.dayForecast || d.name === new Date(periods[0].startTime).toLocaleDateString(undefined, { weekday: 'long' }))) {
+                    d.highTemp = d.temp;
+                }
+                return d;
+            });
+        }
+
+
+        function displayRadar(lat, lon) {
+            // Windy embed URL: https://embed.windy.com/embed2.html
+            // Parameters: lat, lon, zoom, layer (radar), menu (hide), message (hide), marker (show at location),
+            // forecast (hide), calendar (now), pressure (hide), type (map), location (coordinates), detail (hide)
+            // metricWind=mph, metricTemp=°F, radarRange=-1 (default, can be adjusted)
+            // To disable sound: This is typically a user setting on Windy itself.
+            // Programmatic control of sound within an iframe is very limited for cross-origin content.
+            // The best approach is to instruct users or hope Windy defaults to no sound.
+            // Some embed APIs might offer a 'mute' or 'noSound' parameter, but Windy's basic embed might not.
+            // We will set `menu=&message=&forecast=&calendar=now&pressure=&type=map&location=coordinates&detail=` to minimize UI clutter.
+            const radarUrl = `https://embed.windy.com/embed2.html?lat=${lat}&lon=${lon}&zoom=7&layer=radar&menu=&message=&marker&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=mph&metricTemp=%C2%B0F&radarRange=-1`;
+            windyRadarEmbed.innerHTML = `<iframe width="100%" height="100%" src="${radarUrl}" frameborder="0" allowfullscreen></iframe>`;
+        }
+
+        function hideOptionalCards() {
+            alertsCard.classList.add('hidden-by-default');
+            forecastCard.classList.add('hidden-by-default');
+            radarCard.classList.add('hidden-by-default');
+            sevenDayForecastContent.classList.add('hidden');
+            showingSevenDayForecast = false;
+            toggleForecastButton.textContent = 'Show 7-Day';
+        }
+
+        function showOptionalCards() {
+            alertsCard.classList.remove('hidden-by-default');
+            forecastCard.classList.remove('hidden-by-default');
+            radarCard.classList.remove('hidden-by-default');
+        }
+
+        // Initial setup
+        hideOptionalCards(); // Ensure they are hidden on page load
+
+    </script>
 </body>
 </html>
