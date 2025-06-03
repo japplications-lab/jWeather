@@ -57,7 +57,7 @@
         <!-- Card 1: Location Search (Always Visible) -->
         <section id="search-location-card" class="card">
             <h2 class="text-2xl font-semibold mb-4 text-gray-700">Search Location</h2>
-            <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 mb-2"> {/* Reduced mb from mb-6 */}
+            <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 mb-2">
                 <input type="text" id="location-search-input" placeholder="Enter City, State or Zip Code" class="flex-grow p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none">
                 <button id="search-button" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-md transition-colors duration-200">Search</button>
             </div>
@@ -69,7 +69,7 @@
             <h2 class="text-2xl font-semibold mb-4 text-gray-700">Latest US Weather News</h2>
             <div id="news-content-area">
                 <!-- Dynamic Content: News items will be populated here by JS -->
-                <p class="text-gray-500">News content will appear here. (This might require a news API or RSS feed integration).</p>
+                <p class="text-gray-500">News content will appear here.</p>
             </div>
         </section>
 
@@ -139,10 +139,12 @@
         const searchButton = document.getElementById('search-button');
         const searchErrorMessage = document.getElementById('search-error-message');
         
-        const weatherNewsCard = document.getElementById('weather-news-card'); // Card 2
+        // Card 2: News (Always visible)
+        const newsCard = document.getElementById('weather-news-card'); 
         const newsContentArea = document.getElementById('news-content-area');
 
-        const currentConditionsCard = document.getElementById('current-conditions-card'); // New Card 3
+        // Card 3: Current Conditions (Hidden by default)
+        const currentConditionsCard = document.getElementById('current-conditions-card'); 
         const locationNameSpan = document.getElementById('location-name');
         const tempEl = document.getElementById('temp');
         const windEl = document.getElementById('wind');
@@ -150,14 +152,17 @@
         const dewpointEl = document.getElementById('dewpoint');
         const conditionIconContainer = document.getElementById('condition-icon-container');
 
-        const activeAlertsCard = document.getElementById('active-alerts-card'); // Card 4
+        // Card 4: Active Alerts (Hidden by default)
+        const activeAlertsCard = document.getElementById('active-alerts-card'); 
         const alertsContentArea = document.getElementById('alerts-content-area');
 
-        const weatherForecastCard = document.getElementById('weather-forecast-card'); // Card 5
+        // Card 5: Weather Forecast (Hidden by default)
+        const weatherForecastCard = document.getElementById('weather-forecast-card'); 
         const forecastContentArea = document.getElementById('forecast-content-area');
         const toggleForecastButton = document.getElementById('toggle-forecast-days');
 
-        const radarCard = document.getElementById('radar-embed-card'); // Card 6
+        // Card 6: Radar (Hidden by default)
+        const radarCard = document.getElementById('radar-embed-card'); 
         const windyRadarContainer = document.getElementById('windy-radar-container');
 
         // Array of cards that are hidden by default and shown after a search
@@ -197,12 +202,14 @@
                 handleSearch();
             }
         });
+        toggleForecastButton.addEventListener('click', displayMockForecast); // Listener for forecast toggle
 
         // --- Main Search Handler ---
         async function handleSearch() {
             const query = searchInput.value.trim();
             clearSearchError();
-            locationSpecificCards.forEach(hideElement); // Hide all location-specific cards initially on new search
+            // Hide all location-specific cards before a new search
+            locationSpecificCards.forEach(hideElement); 
 
             if (!query) {
                 displaySearchError('Please enter a location (City, State or Zip Code).');
@@ -213,7 +220,7 @@
             searchButton.disabled = true;
 
             try {
-                // --- MOCK GEOCODE DATA (Remove and implement actual geocoding) ---
+                // --- MOCK GEOCODE DATA (Replace with actual geocoding) ---
                 let mockLat, mockLon, mockDisplayName;
                 if (query.toLowerCase().includes("new york") || query.includes("10001")) {
                     mockLat = 40.7128; mockLon = -74.0060; mockDisplayName = "New York, NY";
@@ -221,22 +228,26 @@
                     mockLat = 41.8781; mockLon = -87.6298; mockDisplayName = "Chicago, IL";
                 } else if (query.toLowerCase().includes("dallas") || query.includes("75201")) {
                     mockLat = 32.7767; mockLon = -96.7970; mockDisplayName = "Dallas, TX";
-                } else {
-                    mockLat = 38.9072; mockLon = -77.0369; mockDisplayName = query; // Default
+                }
+                 else { // Default for any other query for demonstration
+                    mockLat = 38.9072; // Washington D.C.
+                    mockLon = -77.0369;
+                    mockDisplayName = query; 
                 }
                 const lat = mockLat;
                 const lon = mockLon;
                 const displayName = mockDisplayName;
                 // --- END MOCK GEOCODE DATA ---
 
-                // Update location name in the Current Conditions card
+                // Update location name in the Current Conditions card (Card 3)
                 locationNameSpan.textContent = displayName;
 
-                // --- MOCKUP: Simulate API calls and display ---
-                displayMockCurrentConditions(displayName); // Populates Card 3
-                displayMockAlerts(query);                // Populates Card 4
-                displayMockForecast();                   // Populates Card 5
-                embedWindyRadar(lat, lon);               // Populates Card 6
+                // --- MOCKUP: Simulate API calls and display content for relevant cards ---
+                displayMockCurrentConditions(); // Populates Card 3
+                displayMockAlerts(query);       // Populates Card 4
+                displayMockForecast();          // Populates Card 5 (initial call)
+                embedWindyRadar(lat, lon);      // Populates Card 6
+                // News card (Card 2) is already visible and populated on page load.
                 // --- END MOCKUP ---
                 
                 // Show all location-specific cards after data is "fetched"
@@ -254,28 +265,30 @@
 
         // --- Mock Data Display Functions (Implement with actual API calls later) ---
 
-        function displayMockCurrentConditions(location) {
-            // locationNameSpan.textContent = location; // Already set in handleSearch
+        function displayMockCurrentConditions() {
+            // locationNameSpan is already set in handleSearch
             tempEl.textContent = `${Math.floor(Math.random() * 30 + 50)}°F`;
             windEl.textContent = `WSW ${Math.floor(Math.random() * 10 + 5)} mph`;
             humidityEl.textContent = `${Math.floor(Math.random() * 40 + 40)}%`;
             dewpointEl.textContent = `${Math.floor(Math.random() * 20 + 40)}°F`;
             conditionIconContainer.innerHTML = `<img src="https://placehold.co/60x60/e2e8f0/94a3b8?text=Icon" alt="Weather icon" class="w-12 h-12 sm:w-16 sm:h-16">`;
-            // showElement(currentConditionsCard); // Visibility handled by locationSpecificCards array
+            // Visibility of currentConditionsCard is handled by locationSpecificCards array in handleSearch
         }
-
-        toggleForecastButton.addEventListener('click', displayMockForecast);
+        
         function displayMockForecast() {
-            forecastContentArea.innerHTML = '';
-            const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-            const isShowing5Day = toggleForecastButton.textContent.includes("7-Day");
-            const numDaysToShow = isShowing5Day ? 5 : 7;
-            toggleForecastButton.textContent = isShowing5Day ? "Show 7-Day Forecast" : "Show 5-Day Forecast";
+            forecastContentArea.innerHTML = ''; // Clear previous forecast
+            const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]; // For correct day names
+            const today = new Date().getDay();
+
+            const isCurrently5Day = toggleForecastButton.textContent.includes("7-Day");
+            const numDaysToShow = isCurrently5Day ? 5 : 7;
+            toggleForecastButton.textContent = isCurrently5Day ? "Show 7-Day Forecast" : "Show 5-Day Forecast";
 
             for (let i = 0; i < numDaysToShow; i++) {
+                const dayIndex = (today + i) % 7;
                 const dayCard = `
                     <div class="forecast-day text-center bg-gray-50 p-3 sm:p-4 rounded-lg shadow">
-                        <p class="font-semibold text-gray-700 text-sm sm:text-base">${days[(new Date().getDay() + i) % 7]}</p> {/* Show actual upcoming days */}
+                        <p class="font-semibold text-gray-700 text-sm sm:text-base">${daysOfWeek[dayIndex]}</p>
                         <img src="https://placehold.co/50x50/e2e8f0/94a3b8?text=Icon" alt="Weather icon" class="mx-auto w-10 h-10 sm:w-12 sm:h-12 my-1 sm:my-2">
                         <p class="text-base sm:text-lg text-gray-800">High: ${Math.floor(Math.random() * 15 + 65)}°F</p>
                         <p class="text-xs sm:text-sm text-gray-600">Low: ${Math.floor(Math.random() * 10 + 45)}°F</p>
@@ -284,21 +297,21 @@
                 `;
                 forecastContentArea.insertAdjacentHTML('beforeend', dayCard);
             }
-            // showElement(weatherForecastCard); // Visibility handled by locationSpecificCards array
+            // Visibility of weatherForecastCard is handled by locationSpecificCards array
         }
         
         function displayMockAlerts(query) {
-            alertsContentArea.innerHTML = '';
+            alertsContentArea.innerHTML = ''; // Clear previous alerts
             let alertHTML = '';
-            // (Alert generation logic from previous version can be reused here)
+            // Simulating different alert scenarios based on query
             if (query.toLowerCase().includes("severe")) {
-                alertHTML += createAlertItemHTML('Tornado Warning', 'Expires: 7:00 PM CDT', 'Dark Red', 'This is a dangerous situation. TAKE SHELTER NOW! A tornado has been confirmed or indicated by radar...');
-                alertHTML += createAlertItemHTML('Severe Thunderstorm Watch', 'Expires: 10:00 PM CDT', 'Light Yellow', 'Conditions are favorable for the development of severe thunderstorms...');
+                alertHTML += createAlertItemHTML('Tornado Warning', 'Expires: 7:00 PM CDT', 'Dark Red', 'This is a dangerous situation. TAKE SHELTER NOW! A tornado has been confirmed or indicated by radar. Move to an interior room on the lowest floor of a sturdy building. Avoid windows. If in a mobile home, a vehicle, or outdoors, move to the closest substantial shelter and protect yourself from flying debris.');
+                alertHTML += createAlertItemHTML('Severe Thunderstorm Watch', 'Expires: 10:00 PM CDT', 'Light Yellow', 'Conditions are favorable for the development of severe thunderstorms in and close to the watch area. These storms may produce large hail, damaging winds, and frequent lightning.');
             } else if (query.toLowerCase().includes("watch")) {
-                alertHTML += createAlertItemHTML('Tornado Watch', 'Expires: 9:00 PM CDT', 'Light Red', 'Conditions are favorable for tornadoes and severe thunderstorms...');
+                alertHTML += createAlertItemHTML('Tornado Watch', 'Expires: 9:00 PM CDT', 'Light Red', 'Conditions are favorable for tornadoes and severe thunderstorms in and close to the watch area. Be prepared to act if a warning is issued.');
             } else if (query.toLowerCase().includes("warning")) {
-                 alertHTML += createAlertItemHTML('Severe Thunderstorm Warning', 'Expires: 5:30 PM CDT', 'Dark Yellow', 'A severe thunderstorm capable of producing large hail and damaging winds was located over [Some Town]...');
-            } else {
+                 alertHTML += createAlertItemHTML('Severe Thunderstorm Warning', 'Expires: 5:30 PM CDT', 'Dark Yellow', 'A severe thunderstorm capable of producing large hail and damaging winds was located over [Some Town], moving east at 30 mph. HAZARD...60 mph wind gusts and quarter size hail. SOURCE...Radar indicated. IMPACT...Hail damage to vehicles is expected. Expect wind damage to roofs, siding, and trees.');
+            } else { // Default: No alerts
                 alertHTML = `
                     <div class="flex items-center text-green-700 p-3 bg-green-100 rounded-md shadow">
                         <svg class="w-5 h-5 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
@@ -306,6 +319,7 @@
                     </div>`;
             }
             alertsContentArea.innerHTML = alertHTML;
+            // Add event listeners for "More Detail" buttons for newly created alerts
             document.querySelectorAll('.alert-detail-toggle').forEach(button => {
                 button.addEventListener('click', function() {
                     const details = this.nextElementSibling;
@@ -313,17 +327,21 @@
                     this.textContent = details.classList.contains('hidden-by-default') ? 'More Detail' : 'Less Detail';
                 });
             });
-            // showElement(activeAlertsCard); // Visibility handled by locationSpecificCards array
+            // Visibility of activeAlertsCard is handled by locationSpecificCards array
         }
 
         function createAlertItemHTML(type, expiration, colorScheme, fullText) {
-            let bgColorClass = 'bg-gray-100'; let textColorClass = 'text-gray-800'; let borderColorClass = 'border-gray-300';
+            let bgColorClass = 'bg-gray-100'; 
+            let textColorClass = 'text-gray-800'; 
+            let borderColorClass = 'border-gray-300';
+
             switch (colorScheme) {
                 case 'Light Yellow': bgColorClass = 'bg-yellow-100'; textColorClass = 'text-yellow-800'; borderColorClass = 'border-yellow-400'; break;
                 case 'Dark Yellow': bgColorClass = 'bg-yellow-400'; textColorClass = 'text-yellow-900'; borderColorClass = 'border-yellow-600'; break;
                 case 'Light Red': bgColorClass = 'bg-red-100'; textColorClass = 'text-red-800'; borderColorClass = 'border-red-400'; break;
                 case 'Dark Red': bgColorClass = 'bg-red-600'; textColorClass = 'text-white'; borderColorClass = 'border-red-800'; break;
             }
+            // Ensure prose class is applied for better text formatting from API
             return `
                 <div class="alert-item p-4 mb-3 rounded-lg shadow ${bgColorClass} ${textColorClass} border-l-4 ${borderColorClass}">
                     <div class="flex justify-between items-center">
@@ -331,40 +349,44 @@
                         <span class="text-xs sm:text-sm">${expiration}</span>
                     </div>
                     <button class="alert-detail-toggle text-sm ${textColorClass.includes('white') ? 'hover:text-gray-200' : 'text-blue-600 hover:text-blue-800'} hover:underline mt-1.5 focus:outline-none">More Detail</button>
-                    <div class="alert-details hidden-by-default mt-2 text-sm sm:text-base leading-relaxed prose max-w-none ${textColorClass.includes('white') ? 'text-gray-100' : 'text-gray-700'}">
+                    <div class="alert-details hidden-by-default mt-2 text-sm sm:text-base leading-relaxed prose max-w-none ${textColorClass.includes('white') ? 'prose-invert' : ''}">
                         ${fullText.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>')}
                     </div>
                 </div>`;
         }
 
         function embedWindyRadar(lat, lon) {
-            const zoomLevel = 7;
+            const zoomLevel = 7; // Default zoom
             const radarUrl = `https://embed.windy.com/embed2.html?lat=${lat}&lon=${lon}&zoom=${zoomLevel}&layer=radar&menuDisable=true&messageDisable=true&markerDisable=true&calendar=now&pressureDisable=true&type=map&location=coordinates&detailDisable=true&metricWind=mph&metricTemp=%C2%B0F&radarRange=-1`;
             windyRadarContainer.innerHTML = `<iframe width="100%" height="100%" src="${radarUrl}" frameborder="0" allowfullscreen></iframe>`;
-            // showElement(radarCard); // Visibility handled by locationSpecificCards array
+            // Visibility of radarCard is handled by locationSpecificCards array
         }
 
-        function displayMockNews() {
-            newsContentArea.innerHTML = '';
+        function displayMockNews() { // Populates the "Latest US Weather News" card (Card 2)
+            newsContentArea.innerHTML = ''; // Clear previous news
             const mockNewsItems = [
-                { headline: "Major Storm System Developing in the Midwest", summary: "Forecasters are tracking a significant weather system...", source: "NWS Weather Brief", date: "June 3, 2025" },
-                { headline: "Heat Advisory Issued for Southwestern States", summary: "Temperatures are expected to soar above 100°F...", source: "Local Weather Channel", date: "June 2, 2025" },
-                { headline: "Tropical Update: Watching Area of Interest", summary: "Meteorologists are monitoring a tropical wave...", source: "National Hurricane Center", date: "June 3, 2025" }
+                { headline: "Major Storm System Developing in the Midwest", summary: "Forecasters are tracking a significant weather system expected to bring heavy rain and potential severe weather to the central US later this week.", source: "NWS Weather Brief", date: "June 3, 2025" },
+                { headline: "Heat Advisory Issued for Southwestern States", summary: "Temperatures are expected to soar above 100°F across parts of Arizona and Nevada, prompting heat advisories.", source: "Local Weather Channel", date: "June 2, 2025" },
+                { headline: "Tropical Update: Watching Area of Interest in the Atlantic", summary: "Meteorologists are monitoring a tropical wave for potential development over the next 5 days.", source: "National Hurricane Center", date: "June 3, 2025" }
             ];
+
             mockNewsItems.forEach(item => {
                 const newsHTML = `
                     <article class="mb-4 pb-4 border-b border-gray-200 last:border-b-0">
                         <h3 class="font-semibold text-lg text-gray-800"><a href="#" target="_blank" rel="noopener noreferrer" class="hover:text-blue-600 hover:underline">${item.headline}</a></h3>
                         <p class="text-sm text-gray-600 mt-1">${item.summary}</p>
                         <p class="text-xs text-gray-400 mt-1">${item.source} - ${item.date}</p>
-                    </article>`;
+                    </article>
+                `;
                 newsContentArea.insertAdjacentHTML('beforeend', newsHTML);
             });
         }
         
         // --- Initial Setup ---
-        locationSpecificCards.forEach(hideElement); // Hide cards that depend on search results
-        displayMockNews(); // Load general news on page load
+        // Hide cards that depend on search results
+        locationSpecificCards.forEach(hideElement); 
+        // Load general news on page load as News Card (Card 2) is always visible
+        displayMockNews(); 
 
     </script>
 
