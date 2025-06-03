@@ -58,7 +58,7 @@
                 const pointData = await pointRes.json();
                 const forecastUrl = pointData.properties.forecast;
                 const conditionsUrl = pointData.properties.forecastHourly;
-                const alertsUrl = pointData.properties.forecastOffice.replace("https://api.weather.gov/offices/", "https://api.weather.gov/alerts/active?point=") + `${lat},${lon}`;
+                const alertsUrl = `https://api.weather.gov/alerts/active?point=${lat},${lon}`;
 
                 const forecastRes = await fetch(forecastUrl);
                 const forecastData = await forecastRes.json();
