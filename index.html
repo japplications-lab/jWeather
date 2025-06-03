@@ -6,65 +6,367 @@
     <title>jWeather</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .alert-severe-thunderstorm-watch { background-color: #FFFFE0; }
-        .alert-severe-thunderstorm-warning { background-color: #FFD700; color: #000000; }
-        .alert-tornado-watch { background-color: #FFD2D2; }
-        .alert-tornado-warning { background-color: #DC143C; color: #FFFFFF; }
-        .hidden-by-default { display: none; }
+        /* Custom styles can be added here if needed, though Tailwind aims to minimize this */
+        .card {
+            @apply bg-white shadow-lg rounded-lg p-6 mb-6;
+        }
+        .hidden-by-default {
+            @apply hidden; /* Utility class to hide elements initially */
+        }
+        /* Styling for the navigation dropdown */
+        .group:hover .group-hover\:block {
+            display: block;
+        }
     </style>
 </head>
-<body>
+<body class="bg-gray-100 font-sans">
 
-<header class="bg-red-600 text-white px-4 py-2 flex justify-between items-center">
-    <div class="flex items-center">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/e/e9/Cloud_font_awesome_white.svg" alt="Cloud Logo" class="h-6 w-6 mr-2">
-        <span class="text-lg font-bold">jWeather</span>
-    </div>
-    <nav class="space-x-4">
-        <a href="#" class="text-white hover:text-gray-300 px-2 py-1 rounded-md text-sm font-medium">Severe Weather</a>
-        <a href="#" class="text-white hover:text-gray-300 px-2 py-1 rounded-md text-sm font-medium">Tropical</a>
-    </nav>
-</header>
+    <!-- Header Section -->
+    <header class="bg-red-600 text-white p-4 shadow-md">
+        <div class="container mx-auto flex justify-between items-center">
+            <!-- Logo -->
+            <div class="flex items-center">
+                <svg class="w-10 h-10 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15a4.5 4.5 0 0 0 4.5 4.5H18a3.75 3.75 0 0 0 1.332-7.257 3 3 0 0 0-1.991-5.189 5.25 5.25 0 0 0-10.513 2.288c-.887-.462-1.868-.682-2.847-.682A4.5 4.5 0 0 0 2.25 15Z" />
+                </svg>
+                <h1 class="text-3xl font-bold">jWeather</h1>
+            </div>
 
-<main class="p-4 space-y-4">
-    <!-- Card 1: Search and Current Conditions -->
-    <div class="bg-white p-4 rounded shadow">
-        <h2 class="text-lg font-semibold mb-2">Search Weather</h2>
-        <input id="location-search" type="text" placeholder="City, State or ZIP" class="border p-2 rounded w-64">
-        <button id="search-button" class="ml-2 bg-blue-600 text-white px-4 py-2 rounded">Search</button>
-        <div id="current-conditions-content" class="mt-4"></div>
-    </div>
+            <!-- Navigation Menu -->
+            <nav>
+                <ul class="flex space-x-6 text-lg">
+                    <li class="relative group">
+                        <a href="#" class="hover:text-gray-300 transition-colors duration-200">Severe Weather</a>
+                        <ul class="absolute left-0 mt-2 w-56 bg-red-700 rounded-md shadow-xl hidden group-hover:block z-10 py-1">
+                            <li><a href="#" class="block px-4 py-2 text-sm hover:bg-red-800 transition-colors duration-150">Outlook</a></li>
+                            <li><a href="#" class="block px-4 py-2 text-sm hover:bg-red-800 transition-colors duration-150">Mesoscale Discussions</a></li>
+                            <li><a href="#" class="block px-4 py-2 text-sm hover:bg-red-800 transition-colors duration-150">Parameters</a></li>
+                            <li><a href="#" class="block px-4 py-2 text-sm hover:bg-red-800 transition-colors duration-150">Storm Reports</a></li>
+                            <li><a href="#" class="block px-4 py-2 text-sm hover:bg-red-800 transition-colors duration-150">Severe Weather 101</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="#" class="hover:text-gray-300 transition-colors duration-200">Tropical</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
 
-    <!-- Card 2: Active Alerts -->
-    <div id="active-alerts-card" class="bg-white p-4 rounded shadow hidden-by-default">
-        <h2 class="text-lg font-semibold mb-2">Active Alerts</h2>
-        <div id="alerts-content"></div>
-    </div>
+    <!-- Main Content Area -->
+    <main class="container mx-auto p-4 md:p-6">
 
-    <!-- Card 3: Forecast -->
-    <div id="forecast-card" class="bg-white p-4 rounded shadow hidden-by-default">
-        <h2 class="text-lg font-semibold mb-2">5-Day Forecast</h2>
-        <div id="forecast-content" class="grid grid-cols-1 md:grid-cols-5 gap-4"></div>
-        <button id="toggle-forecast-days" class="mt-2 text-blue-600 underline">Toggle 7-Day Forecast</button>
-        <div id="seven-day-forecast-content" class="grid grid-cols-1 md:grid-cols-7 gap-4 mt-4 hidden"></div>
-    </div>
+        <!-- Card 1: Location Search (Always Visible) -->
+        <section id="search-location-card" class="card">
+            <h2 class="text-2xl font-semibold mb-4 text-gray-700">Search Location</h2>
+            <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 mb-2"> {/* Reduced mb from mb-6 */}
+                <input type="text" id="location-search-input" placeholder="Enter City, State or Zip Code" class="flex-grow p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none">
+                <button id="search-button" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-md transition-colors duration-200">Search</button>
+            </div>
+            <div id="search-error-message" class="text-red-500 mt-2 hidden-by-default"></div>
+        </section>
 
-    <!-- Card 4: Radar -->
-    <div id="radar-card" class="bg-white p-4 rounded shadow hidden-by-default">
-        <h2 class="text-lg font-semibold mb-2">Live Radar</h2>
-        <div id="windy-radar-embed"></div>
-    </div>
+        <!-- Card 2: Latest US Weather News (Always Visible) -->
+        <section id="weather-news-card" class="card">
+            <h2 class="text-2xl font-semibold mb-4 text-gray-700">Latest US Weather News</h2>
+            <div id="news-content-area">
+                <!-- Dynamic Content: News items will be populated here by JS -->
+                <p class="text-gray-500">News content will appear here. (This might require a news API or RSS feed integration).</p>
+            </div>
+        </section>
 
-    <!-- Card 5: US Weather News -->
-    <div class="bg-white p-4 rounded shadow">
-        <h2 class="text-lg font-semibold mb-2">Latest US Weather News</h2>
-        <p>Coming soon...</p>
-    </div>
-</main>
+        <!-- Card 3: Current Conditions (Hidden until location is searched) -->
+        <section id="current-conditions-card" class="card hidden-by-default">
+            <h3 class="text-xl font-semibold mb-3 text-gray-700">Current Conditions for <span id="location-name" class="text-blue-600">[Location]</span></h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-gray-600">
+                <div class="bg-gray-50 p-4 rounded-lg shadow">
+                    <p class="font-medium text-gray-500">Temperature:</p>
+                    <p id="temp" class="text-2xl font-bold text-gray-800">[Temp]</p>
+                </div>
+                <div class="bg-gray-50 p-4 rounded-lg shadow">
+                    <p class="font-medium text-gray-500">Wind:</p>
+                    <p id="wind" class="text-lg text-gray-800">[Wind]</p>
+                </div>
+                <div class="bg-gray-50 p-4 rounded-lg shadow">
+                    <p class="font-medium text-gray-500">Humidity:</p>
+                    <p id="humidity" class="text-lg text-gray-800">[Humidity]</p>
+                </div>
+                <div class="bg-gray-50 p-4 rounded-lg shadow">
+                    <p class="font-medium text-gray-500">Dew Point:</p>
+                    <p id="dewpoint" class="text-lg text-gray-800">[Dew Point]</p>
+                </div>
+            </div>
+            <div id="condition-icon-container" class="mt-4 flex items-center justify-center sm:justify-start">
+                <p class="text-gray-500">[Weather Icon Placeholder]</p>
+            </div>
+        </section>
 
-<script>
-// Placeholder for future JavaScript
-</script>
+        <!-- Card 4: Active Weather Alerts (Hidden until location is searched) -->
+        <section id="active-alerts-card" class="card hidden-by-default">
+            <h2 class="text-2xl font-semibold mb-2 text-gray-700">Active Alerts</h2>
+            <hr class="mb-4 border-gray-300">
+            <div id="alerts-content-area">
+                <!-- Dynamic Content: Alerts list or "no alerts" message -->
+            </div>
+        </section>
+
+        <!-- Card 5: Weather Forecast (Hidden until location is searched) -->
+        <section id="weather-forecast-card" class="card hidden-by-default">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-semibold text-gray-700">Weather Forecast</h2>
+                <button id="toggle-forecast-days" class="text-blue-600 hover:underline text-sm focus:outline-none">Show 7-Day Forecast</button>
+            </div>
+            <div id="forecast-content-area" class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+                <!-- Dynamic Content: Forecast days will be populated here by JS -->
+            </div>
+        </section>
+
+        <!-- Card 6: Reflective Radar (Hidden until location is searched) -->
+        <section id="radar-embed-card" class="card hidden-by-default">
+            <h2 class="text-2xl font-semibold mb-4 text-gray-700">Reflective Radar</h2>
+            <div id="windy-radar-container" class="w-full h-[300px] sm:h-[400px] md:h-[500px] bg-gray-200 rounded-md flex items-center justify-center overflow-hidden">
+                <p class="text-gray-500">Radar will load here once a location is searched.</p>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="text-center p-6 text-gray-500 text-sm border-t border-gray-200 mt-8">
+        &copy; <span id="current-year"></span> jWeather. All rights reserved.
+    </footer>
+
+    <script>
+        // --- DOM Element References ---
+        const searchInput = document.getElementById('location-search-input');
+        const searchButton = document.getElementById('search-button');
+        const searchErrorMessage = document.getElementById('search-error-message');
+        
+        const weatherNewsCard = document.getElementById('weather-news-card'); // Card 2
+        const newsContentArea = document.getElementById('news-content-area');
+
+        const currentConditionsCard = document.getElementById('current-conditions-card'); // New Card 3
+        const locationNameSpan = document.getElementById('location-name');
+        const tempEl = document.getElementById('temp');
+        const windEl = document.getElementById('wind');
+        const humidityEl = document.getElementById('humidity');
+        const dewpointEl = document.getElementById('dewpoint');
+        const conditionIconContainer = document.getElementById('condition-icon-container');
+
+        const activeAlertsCard = document.getElementById('active-alerts-card'); // Card 4
+        const alertsContentArea = document.getElementById('alerts-content-area');
+
+        const weatherForecastCard = document.getElementById('weather-forecast-card'); // Card 5
+        const forecastContentArea = document.getElementById('forecast-content-area');
+        const toggleForecastButton = document.getElementById('toggle-forecast-days');
+
+        const radarCard = document.getElementById('radar-embed-card'); // Card 6
+        const windyRadarContainer = document.getElementById('windy-radar-container');
+
+        // Array of cards that are hidden by default and shown after a search
+        const locationSpecificCards = [
+            currentConditionsCard, // Card 3
+            activeAlertsCard,      // Card 4
+            weatherForecastCard,   // Card 5
+            radarCard              // Card 6
+        ];
+
+        // --- Utility Functions ---
+        function showElement(element) {
+            if (element) element.classList.remove('hidden-by-default');
+        }
+
+        function hideElement(element) {
+            if (element) element.classList.add('hidden-by-default');
+        }
+
+        function displaySearchError(message) {
+            searchErrorMessage.textContent = message;
+            showElement(searchErrorMessage);
+        }
+
+        function clearSearchError() {
+            searchErrorMessage.textContent = '';
+            hideElement(searchErrorMessage);
+        }
+
+        // --- Footer Year ---
+        document.getElementById('current-year').textContent = new Date().getFullYear();
+
+        // --- Event Listeners ---
+        searchButton.addEventListener('click', handleSearch);
+        searchInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                handleSearch();
+            }
+        });
+
+        // --- Main Search Handler ---
+        async function handleSearch() {
+            const query = searchInput.value.trim();
+            clearSearchError();
+            locationSpecificCards.forEach(hideElement); // Hide all location-specific cards initially on new search
+
+            if (!query) {
+                displaySearchError('Please enter a location (City, State or Zip Code).');
+                return;
+            }
+
+            searchButton.textContent = 'Searching...';
+            searchButton.disabled = true;
+
+            try {
+                // --- MOCK GEOCODE DATA (Remove and implement actual geocoding) ---
+                let mockLat, mockLon, mockDisplayName;
+                if (query.toLowerCase().includes("new york") || query.includes("10001")) {
+                    mockLat = 40.7128; mockLon = -74.0060; mockDisplayName = "New York, NY";
+                } else if (query.toLowerCase().includes("chicago") || query.includes("60601")) {
+                    mockLat = 41.8781; mockLon = -87.6298; mockDisplayName = "Chicago, IL";
+                } else if (query.toLowerCase().includes("dallas") || query.includes("75201")) {
+                    mockLat = 32.7767; mockLon = -96.7970; mockDisplayName = "Dallas, TX";
+                } else {
+                    mockLat = 38.9072; mockLon = -77.0369; mockDisplayName = query; // Default
+                }
+                const lat = mockLat;
+                const lon = mockLon;
+                const displayName = mockDisplayName;
+                // --- END MOCK GEOCODE DATA ---
+
+                // Update location name in the Current Conditions card
+                locationNameSpan.textContent = displayName;
+
+                // --- MOCKUP: Simulate API calls and display ---
+                displayMockCurrentConditions(displayName); // Populates Card 3
+                displayMockAlerts(query);                // Populates Card 4
+                displayMockForecast();                   // Populates Card 5
+                embedWindyRadar(lat, lon);               // Populates Card 6
+                // --- END MOCKUP ---
+                
+                // Show all location-specific cards after data is "fetched"
+                locationSpecificCards.forEach(showElement);
+
+            } catch (error) {
+                console.error("Search failed:", error);
+                displaySearchError(`Failed to fetch weather data. ${error.message}`);
+                locationSpecificCards.forEach(hideElement); // Ensure cards are hidden on error
+            } finally {
+                searchButton.textContent = 'Search';
+                searchButton.disabled = false;
+            }
+        }
+
+        // --- Mock Data Display Functions (Implement with actual API calls later) ---
+
+        function displayMockCurrentConditions(location) {
+            // locationNameSpan.textContent = location; // Already set in handleSearch
+            tempEl.textContent = `${Math.floor(Math.random() * 30 + 50)}°F`;
+            windEl.textContent = `WSW ${Math.floor(Math.random() * 10 + 5)} mph`;
+            humidityEl.textContent = `${Math.floor(Math.random() * 40 + 40)}%`;
+            dewpointEl.textContent = `${Math.floor(Math.random() * 20 + 40)}°F`;
+            conditionIconContainer.innerHTML = `<img src="https://placehold.co/60x60/e2e8f0/94a3b8?text=Icon" alt="Weather icon" class="w-12 h-12 sm:w-16 sm:h-16">`;
+            // showElement(currentConditionsCard); // Visibility handled by locationSpecificCards array
+        }
+
+        toggleForecastButton.addEventListener('click', displayMockForecast);
+        function displayMockForecast() {
+            forecastContentArea.innerHTML = '';
+            const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+            const isShowing5Day = toggleForecastButton.textContent.includes("7-Day");
+            const numDaysToShow = isShowing5Day ? 5 : 7;
+            toggleForecastButton.textContent = isShowing5Day ? "Show 7-Day Forecast" : "Show 5-Day Forecast";
+
+            for (let i = 0; i < numDaysToShow; i++) {
+                const dayCard = `
+                    <div class="forecast-day text-center bg-gray-50 p-3 sm:p-4 rounded-lg shadow">
+                        <p class="font-semibold text-gray-700 text-sm sm:text-base">${days[(new Date().getDay() + i) % 7]}</p> {/* Show actual upcoming days */}
+                        <img src="https://placehold.co/50x50/e2e8f0/94a3b8?text=Icon" alt="Weather icon" class="mx-auto w-10 h-10 sm:w-12 sm:h-12 my-1 sm:my-2">
+                        <p class="text-base sm:text-lg text-gray-800">High: ${Math.floor(Math.random() * 15 + 65)}°F</p>
+                        <p class="text-xs sm:text-sm text-gray-600">Low: ${Math.floor(Math.random() * 10 + 45)}°F</p>
+                        <p class="text-xs text-gray-500 mt-1 hidden sm:block">Partly Cloudy</p>
+                    </div>
+                `;
+                forecastContentArea.insertAdjacentHTML('beforeend', dayCard);
+            }
+            // showElement(weatherForecastCard); // Visibility handled by locationSpecificCards array
+        }
+        
+        function displayMockAlerts(query) {
+            alertsContentArea.innerHTML = '';
+            let alertHTML = '';
+            // (Alert generation logic from previous version can be reused here)
+            if (query.toLowerCase().includes("severe")) {
+                alertHTML += createAlertItemHTML('Tornado Warning', 'Expires: 7:00 PM CDT', 'Dark Red', 'This is a dangerous situation. TAKE SHELTER NOW! A tornado has been confirmed or indicated by radar...');
+                alertHTML += createAlertItemHTML('Severe Thunderstorm Watch', 'Expires: 10:00 PM CDT', 'Light Yellow', 'Conditions are favorable for the development of severe thunderstorms...');
+            } else if (query.toLowerCase().includes("watch")) {
+                alertHTML += createAlertItemHTML('Tornado Watch', 'Expires: 9:00 PM CDT', 'Light Red', 'Conditions are favorable for tornadoes and severe thunderstorms...');
+            } else if (query.toLowerCase().includes("warning")) {
+                 alertHTML += createAlertItemHTML('Severe Thunderstorm Warning', 'Expires: 5:30 PM CDT', 'Dark Yellow', 'A severe thunderstorm capable of producing large hail and damaging winds was located over [Some Town]...');
+            } else {
+                alertHTML = `
+                    <div class="flex items-center text-green-700 p-3 bg-green-100 rounded-md shadow">
+                        <svg class="w-5 h-5 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                        <span class="font-medium">No active alerts for this location.</span>
+                    </div>`;
+            }
+            alertsContentArea.innerHTML = alertHTML;
+            document.querySelectorAll('.alert-detail-toggle').forEach(button => {
+                button.addEventListener('click', function() {
+                    const details = this.nextElementSibling;
+                    details.classList.toggle('hidden-by-default');
+                    this.textContent = details.classList.contains('hidden-by-default') ? 'More Detail' : 'Less Detail';
+                });
+            });
+            // showElement(activeAlertsCard); // Visibility handled by locationSpecificCards array
+        }
+
+        function createAlertItemHTML(type, expiration, colorScheme, fullText) {
+            let bgColorClass = 'bg-gray-100'; let textColorClass = 'text-gray-800'; let borderColorClass = 'border-gray-300';
+            switch (colorScheme) {
+                case 'Light Yellow': bgColorClass = 'bg-yellow-100'; textColorClass = 'text-yellow-800'; borderColorClass = 'border-yellow-400'; break;
+                case 'Dark Yellow': bgColorClass = 'bg-yellow-400'; textColorClass = 'text-yellow-900'; borderColorClass = 'border-yellow-600'; break;
+                case 'Light Red': bgColorClass = 'bg-red-100'; textColorClass = 'text-red-800'; borderColorClass = 'border-red-400'; break;
+                case 'Dark Red': bgColorClass = 'bg-red-600'; textColorClass = 'text-white'; borderColorClass = 'border-red-800'; break;
+            }
+            return `
+                <div class="alert-item p-4 mb-3 rounded-lg shadow ${bgColorClass} ${textColorClass} border-l-4 ${borderColorClass}">
+                    <div class="flex justify-between items-center">
+                        <h4 class="font-bold text-md sm:text-lg">${type}</h4>
+                        <span class="text-xs sm:text-sm">${expiration}</span>
+                    </div>
+                    <button class="alert-detail-toggle text-sm ${textColorClass.includes('white') ? 'hover:text-gray-200' : 'text-blue-600 hover:text-blue-800'} hover:underline mt-1.5 focus:outline-none">More Detail</button>
+                    <div class="alert-details hidden-by-default mt-2 text-sm sm:text-base leading-relaxed prose max-w-none ${textColorClass.includes('white') ? 'text-gray-100' : 'text-gray-700'}">
+                        ${fullText.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>')}
+                    </div>
+                </div>`;
+        }
+
+        function embedWindyRadar(lat, lon) {
+            const zoomLevel = 7;
+            const radarUrl = `https://embed.windy.com/embed2.html?lat=${lat}&lon=${lon}&zoom=${zoomLevel}&layer=radar&menuDisable=true&messageDisable=true&markerDisable=true&calendar=now&pressureDisable=true&type=map&location=coordinates&detailDisable=true&metricWind=mph&metricTemp=%C2%B0F&radarRange=-1`;
+            windyRadarContainer.innerHTML = `<iframe width="100%" height="100%" src="${radarUrl}" frameborder="0" allowfullscreen></iframe>`;
+            // showElement(radarCard); // Visibility handled by locationSpecificCards array
+        }
+
+        function displayMockNews() {
+            newsContentArea.innerHTML = '';
+            const mockNewsItems = [
+                { headline: "Major Storm System Developing in the Midwest", summary: "Forecasters are tracking a significant weather system...", source: "NWS Weather Brief", date: "June 3, 2025" },
+                { headline: "Heat Advisory Issued for Southwestern States", summary: "Temperatures are expected to soar above 100°F...", source: "Local Weather Channel", date: "June 2, 2025" },
+                { headline: "Tropical Update: Watching Area of Interest", summary: "Meteorologists are monitoring a tropical wave...", source: "National Hurricane Center", date: "June 3, 2025" }
+            ];
+            mockNewsItems.forEach(item => {
+                const newsHTML = `
+                    <article class="mb-4 pb-4 border-b border-gray-200 last:border-b-0">
+                        <h3 class="font-semibold text-lg text-gray-800"><a href="#" target="_blank" rel="noopener noreferrer" class="hover:text-blue-600 hover:underline">${item.headline}</a></h3>
+                        <p class="text-sm text-gray-600 mt-1">${item.summary}</p>
+                        <p class="text-xs text-gray-400 mt-1">${item.source} - ${item.date}</p>
+                    </article>`;
+                newsContentArea.insertAdjacentHTML('beforeend', newsHTML);
+            });
+        }
+        
+        // --- Initial Setup ---
+        locationSpecificCards.forEach(hideElement); // Hide cards that depend on search results
+        displayMockNews(); // Load general news on page load
+
+    </script>
 
 </body>
 </html>
