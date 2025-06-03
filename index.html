@@ -1,93 +1,84 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <title>jWeather</title>
-  <link rel="stylesheet" href="style.css" />
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.4.1/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
   <script defer src="script.js"></script>
-  <style>
-    /* Existing styles remain unchanged */
-    /* Additional styling for search */
-    .search-container {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      margin-top: 1rem;
-    }
-    .search-container input[type="text"] {
-      padding: 0.5rem;
-      width: 250px;
-      border: none;
-      border-radius: 4px 0 0 4px;
-    }
-    .search-container button {
-      padding: 0.5rem 1rem;
-      border: none;
-      background-color: #2563eb;
-      color: white;
-      border-radius: 0 4px 4px 0;
-      cursor: pointer;
-    }
-    .weather-current, .forecast-grid {
-      margin-top: 2rem;
-    }
-  </style>
 </head>
-<body>
-  <header>
-    <div class="navbar">
-      <h1 class="logo">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-          <path fill="#fff" d="M20 38c-2.2 0-4-1.8-4-4s1.8-4 4-4c.4 0 .9.1 1.3.2C22.6 27.2 26.4 24 31 24c4.4 0 8.1 2.9 9.5 6.9.5-.1 1.1-.1 1.5-.1 3.3 0 6 2.7 6 6s-2.7 6-6 6H20z"/>
-        </svg>
-        jWeather
-      </h1>
-      <nav>
-        <ul>
-          <li><a href="#">Home</a></li>
-          <li><a href="#forecast">Forecast</a></li>
-          <li><a href="#maps">Maps</a></li>
-          <li><a href="#alerts">Alerts</a></li>
-        </ul>
-      </nav>
+<body class="bg-gray-100 text-gray-800">
+  <!-- Header -->
+  <header class="bg-red-700 text-white p-4 flex items-center justify-between shadow-md">
+    <div class="flex items-center space-x-2">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="white" width="32" height="32">
+        <path d="M20 38c-2.2 0-4-1.8-4-4s1.8-4 4-4c.4 0 .9.1 1.3.2C22.6 27.2 26.4 24 31 24c4.4 0 8.1 2.9 9.5 6.9.5-.1 1.1-.1 1.5-.1 3.3 0 6 2.7 6 6s-2.7 6-6 6H20z"/>
+      </svg>
+      <span class="text-xl font-bold">jWeather</span>
     </div>
-    <div class="search-container">
-      <input type="text" id="locationInput" placeholder="Enter City, State or ZIP" />
-      <button onclick="fetchWeather()">Search</button>
-    </div>
+    <nav>
+      <ul class="flex space-x-6 text-white font-medium">
+        <li class="relative group cursor-pointer">
+          Severe Weather
+          <ul class="absolute hidden group-hover:block bg-white text-black mt-2 p-2 rounded shadow-lg space-y-1">
+            <li><a href="#" class="block px-4 py-1 hover:bg-gray-100">Outlook</a></li>
+            <li><a href="#" class="block px-4 py-1 hover:bg-gray-100">Mesoscale Discussions</a></li>
+            <li><a href="#" class="block px-4 py-1 hover:bg-gray-100">Parameters</a></li>
+            <li><a href="#" class="block px-4 py-1 hover:bg-gray-100">Storm Reports</a></li>
+            <li><a href="#" class="block px-4 py-1 hover:bg-gray-100">Severe Weather 101</a></li>
+          </ul>
+        </li>
+        <li><a href="#" class="hover:underline">Tropical</a></li>
+      </ul>
+    </nav>
   </header>
 
-  <main>
-    <section class="weather-current">
-      <h2>Current Conditions</h2>
-      <div id="current-conditions" class="card">Loading current conditions...</div>
-    </section>
+  <!-- Card 1: Search and Current Conditions -->
+  <section class="max-w-4xl mx-auto p-4 bg-white shadow rounded mt-6">
+    <h2 class="text-xl font-semibold mb-4">Check Your Local Weather</h2>
+    <div class="flex mb-4 space-x-2">
+      <input type="text" id="locationInput" placeholder="Enter city, state or ZIP" class="flex-1 p-2 border rounded">
+      <button onclick="fetchWeather()" class="bg-blue-600 text-white px-4 py-2 rounded">Search</button>
+    </div>
+    <div id="current-conditions">
+      <!-- Populated dynamically -->
+    </div>
+  </section>
 
-    <section id="forecast" class="grid-section">
-      <h2>5-Day Forecast</h2>
-      <div class="forecast-grid" id="forecast-grid">
-        <!-- Forecast cards will be inserted here by JavaScript -->
-      </div>
-    </section>
+  <!-- Card 2: Active Alerts -->
+  <section class="max-w-4xl mx-auto p-4 bg-white shadow rounded mt-6 hidden" id="alerts-card">
+    <h2 class="text-xl font-semibold mb-2">Active Alerts</h2>
+    <hr class="mb-4">
+    <div id="alerts-list">
+      <!-- Alerts go here -->
+    </div>
+  </section>
 
-    <section id="maps">
-      <h2>Interactive Weather Maps</h2>
-      <div class="map-container">
-        <iframe src="https://www.weather.gov/" title="NWS Weather Map"></iframe>
-      </div>
-    </section>
+  <!-- Card 3: 5/7 Day Forecast -->
+  <section class="max-w-4xl mx-auto p-4 bg-white shadow rounded mt-6 hidden" id="forecast-card">
+    <div class="flex items-center justify-between">
+      <h2 class="text-xl font-semibold">5-Day Forecast</h2>
+      <button onclick="toggleForecastDays()" class="text-blue-600">+ Expand to 7</button>
+    </div>
+    <div id="forecast-days" class="mt-4 grid grid-cols-1 md:grid-cols-5 gap-4">
+      <!-- Forecast content here -->
+    </div>
+  </section>
 
-    <section id="alerts" class="alerts-section">
-      <h2>Severe Weather Alerts</h2>
-      <div id="alert-box">
-        <p>No active alerts.</p>
-      </div>
-    </section>
-  </main>
+  <!-- Card 4: Radar -->
+  <section class="max-w-4xl mx-auto p-4 bg-white shadow rounded mt-6 hidden" id="radar-card">
+    <h2 class="text-xl font-semibold mb-4">Live Reflective Radar</h2>
+    <iframe id="windy-embed" width="100%" height="450" frameborder="0"></iframe>
+  </section>
 
-  <footer>
-    <p>&copy; 2025 jWeather. All rights reserved.</p>
-  </footer>
+  <!-- Card 5: News -->
+  <section class="max-w-4xl mx-auto p-4 bg-white shadow rounded mt-6" id="weather-news">
+    <h2 class="text-xl font-semibold mb-4">Latest US Weather News</h2>
+    <div id="news-content">
+      <!-- News articles or headlines go here -->
+    </div>
+  </section>
 </body>
 </html>
