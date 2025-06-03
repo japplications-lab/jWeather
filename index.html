@@ -21,7 +21,52 @@
 </head>
 <body>
 
-<!-- your existing body content here -->
+<header class="bg-red-600 text-white p-4 flex justify-between items-center">
+    <div class="flex items-center">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/e/e9/Cloud_font_awesome_white.svg" alt="Cloud Logo" class="h-8 w-8 mr-2">
+        <span class="text-xl font-bold">jWeather</span>
+    </div>
+    <nav class="space-x-4">
+        <a href="#" class="nav-item">Severe Weather</a>
+        <a href="#" class="nav-item">Tropical</a>
+    </nav>
+</header>
+
+<main class="p-4 space-y-4">
+    <!-- Card 1: Search and Current Conditions -->
+    <div class="bg-white p-4 rounded shadow">
+        <h2 class="text-lg font-semibold mb-2">Search Weather</h2>
+        <input id="location-search" type="text" placeholder="City, State or ZIP" class="border p-2 rounded w-64">
+        <button id="search-button" class="ml-2 bg-blue-600 text-white px-4 py-2 rounded">Search</button>
+        <div id="current-conditions-content" class="mt-4"></div>
+    </div>
+
+    <!-- Card 2: Active Alerts -->
+    <div id="active-alerts-card" class="bg-white p-4 rounded shadow hidden-by-default">
+        <h2 class="text-lg font-semibold mb-2">Active Alerts</h2>
+        <div id="alerts-content"></div>
+    </div>
+
+    <!-- Card 3: Forecast -->
+    <div id="forecast-card" class="bg-white p-4 rounded shadow hidden-by-default">
+        <h2 class="text-lg font-semibold mb-2">5-Day Forecast</h2>
+        <div id="forecast-content" class="grid grid-cols-1 md:grid-cols-5 gap-4"></div>
+        <button id="toggle-forecast-days" class="mt-2 text-blue-600 underline">Toggle 7-Day Forecast</button>
+        <div id="seven-day-forecast-content" class="grid grid-cols-1 md:grid-cols-7 gap-4 mt-4 hidden"></div>
+    </div>
+
+    <!-- Card 4: Radar -->
+    <div id="radar-card" class="bg-white p-4 rounded shadow hidden-by-default">
+        <h2 class="text-lg font-semibold mb-2">Live Radar</h2>
+        <div id="windy-radar-embed"></div>
+    </div>
+
+    <!-- Card 5: US Weather News -->
+    <div class="bg-white p-4 rounded shadow">
+        <h2 class="text-lg font-semibold mb-2">Latest US Weather News</h2>
+        <p>Coming soon...</p>
+    </div>
+</main>
 
 <script>
     document.addEventListener("DOMContentLoaded", () => {
