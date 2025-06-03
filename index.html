@@ -40,16 +40,31 @@
         .sub-nav-item {
             @apply text-gray-700 hover:bg-gray-200 block px-3 py-2 rounded-md text-base font-medium;
         }
-        .alert-severe-thunderstorm-watch { background-color: #FFFFE0; /* Light yellow */ }
-        .alert-severe-thunderstorm-warning { background-color: #FFD700; /* Darker yellow */ color: #000000; /* Contrasting text */ }
-        .alert-tornado-watch { background-color: #FFD2D2; /* Light red */ }
-        .alert-tornado-warning { background-color: #DC143C; /* Dark red */ color: #FFFFFF; /* White text */ }
+        .alert-severe-thunderstorm-watch { background-color: #FFFFE0; }
+        .alert-severe-thunderstorm-warning { background-color: #FFD700; color: #000000; }
+        .alert-tornado-watch { background-color: #FFD2D2; }
+        .alert-tornado-warning { background-color: #DC143C; color: #FFFFFF; }
         .hidden-by-default { display: none; }
     </style>
 </head>
 <body class="bg-gray-100">
 
-<!-- [HTML truncated for brevity - full source matches user's latest code block above] -->
+    <header class="bg-red-600 shadow-lg">
+        <!-- Navigation content here -->
+    </header>
+
+    <main class="container mx-auto p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Main content and cards here (search, alerts, forecast, radar, news) -->
+    </main>
+
+    <footer class="bg-gray-800 text-white text-center p-4 mt-8">
+        <p>&copy; <span id="current-year"></span> jWeather. All rights reserved.</p>
+    </footer>
+
+    <script>
+        document.getElementById('current-year').textContent = new Date().getFullYear();
+        // JS logic for event listeners and weather fetching here (omitted for brevity)
+    </script>
 
 </body>
 </html>
