@@ -5,7 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>jWeather</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
+    <style>
+        .nav-item {
+            @apply text-white hover:text-gray-300 px-3 py-2 rounded-md text-sm font-medium;
+        }
+        .sub-nav-item {
+            @apply text-gray-700 hover:bg-gray-200 block px-3 py-2 rounded-md text-base font-medium;
+        }
+        .alert-severe-thunderstorm-watch { background-color: #FFFFE0; }
+        .alert-severe-thunderstorm-warning { background-color: #FFD700; color: #000000; }
+        .alert-tornado-watch { background-color: #FFD2D2; }
+        .alert-tornado-warning { background-color: #DC143C; color: #FFFFFF; }
+        .hidden-by-default { display: none; }
+    </style>
+</head>
+<body>
+
+<!-- your existing body content here -->
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
         async function geocodeLocation(query) {
             const encoded = encodeURIComponent(query);
             const url = `https://nominatim.openstreetmap.org/search?q=${encoded}&format=json&limit=1`;
@@ -31,120 +50,110 @@
                 return null;
             }
         }
-    </script>
-    <style>
-        .nav-item {
-            @apply text-white hover:text-gray-300 px-3 py-2 rounded-md text-sm font-medium;
-        }
-        .sub-nav-item {
-            @apply text-gray-700 hover:bg-gray-200 block px-3 py-2 rounded-md text-base font-medium;
-        }
-        .alert-severe-thunderstorm-watch { background-color: #FFFFE0; }
-        .alert-severe-thunderstorm-warning { background-color: #FFD700; color: #000000; }
-        .alert-tornado-watch { background-color: #FFD2D2; }
-        .alert-tornado-warning { background-color: #DC143C; color: #FFFFFF; }
-        .hidden-by-default { display: none; }
-    </style>
-</head>
-<body class="bg-gray-100">
 
-    <header class="bg-red-600 shadow-lg">
-        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <span class="text-white text-xl font-bold">
-                            <svg class="inline-block h-8 w-8 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"></path>
-                            </svg>
-                            jWeather
-                        </span>
-                    </div>
+        async function fetchWeather(lat, lon) {
+            const base = `https://api.weather.gov/points/${lat},${lon}`;
+            try {
+                const pointRes = await fetch(base);
+                const pointData = await pointRes.json();
+                const forecastUrl = pointData.properties.forecast;
+                const conditionsUrl = pointData.properties.forecastHourly;
+                const alertsUrl = pointData.properties.forecastOffice.replace("https://api.weather.gov/offices/", "https://api.weather.gov/alerts/active?point=") + `${lat},${lon}`;
+
+                const forecastRes = await fetch(forecastUrl);
+                const forecastData = await forecastRes.json();
+
+                const hourlyRes = await fetch(conditionsUrl);
+                const hourlyData = await hourlyRes.json();
+
+                const alertsRes = await fetch(alertsUrl);
+                const alertsData = await alertsRes.json();
+
+                displayCurrentConditions(hourlyData);
+                displayForecast(forecastData);
+                displayAlerts(alertsData);
+            } catch (e) {
+                console.error("Error fetching weather data:", e);
+            }
+        }
+
+        function displayCurrentConditions(data) {
+            const current = data.properties.periods[0];
+            const el = document.getElementById("current-conditions-content");
+            el.innerHTML = `
+                <p><strong>Condition:</strong> ${current.shortForecast}</p>
+                <p><strong>Temperature:</strong> ${current.temperature} °F</p>
+                <p><strong>Wind:</strong> ${current.windSpeed} ${current.windDirection}</p>
+                <p><strong>Humidity:</strong> N/A</p>
+                <p><strong>Dew Point:</strong> N/A</p>
+            `;
+        }
+
+        function displayForecast(data) {
+            const fiveDay = data.properties.periods.slice(0, 5);
+            const sevenDay = data.properties.periods.slice(0, 7);
+
+            const forecastEl = document.getElementById("forecast-content");
+            forecastEl.innerHTML = fiveDay.map(day => `
+                <div class="p-2 border rounded">
+                    <h4 class="font-semibold">${day.name}</h4>
+                    <img src="${day.icon}" alt="${day.shortForecast}" class="mx-auto">
+                    <p>${day.temperature}°F</p>
                 </div>
-                <div class="hidden md:block">
-                    <div class="ml-10 flex items-baseline space-x-4">
-                        <div class="relative group">
-                            <a href="#" class="nav-item">Severe Weather
-                                <svg class="inline-block h-4 w-4" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                                </svg>
-                            </a>
-                            <div class="absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
-                                <div class="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
-                                    <a href="#" class="sub-nav-item" role="menuitem">Outlook</a>
-                                    <a href="#" class="sub-nav-item" role="menuitem">Mesoscale Discussions</a>
-                                    <a href="#" class="sub-nav-item" role="menuitem">Parameters</a>
-                                    <a href="#" class="sub-nav-item" role="menuitem">Storm Reports</a>
-                                    <a href="#" class="sub-nav-item" role="menuitem">Severe Weather 101</a>
-                                </div>
-                            </div>
+            `).join('');
+
+            const sevenDayEl = document.getElementById("seven-day-forecast-content");
+            sevenDayEl.innerHTML = sevenDay.map(day => `
+                <div class="p-2 border rounded">
+                    <h4 class="font-semibold">${day.name}</h4>
+                    <img src="${day.icon}" alt="${day.shortForecast}" class="mx-auto">
+                    <p>${day.temperature}°F</p>
+                </div>
+            `).join('');
+        }
+
+        function displayAlerts(data) {
+            const card = document.getElementById("active-alerts-card");
+            const container = document.getElementById("alerts-content");
+            if (!data.features.length) {
+                container.innerHTML = `<div class="bg-green-100 text-green-800 p-3 rounded-md">✅ No active alerts for this location.</div>`;
+            } else {
+                container.innerHTML = data.features.map(alert => {
+                    let alertClass = "bg-gray-200";
+                    const title = alert.properties.event.toLowerCase();
+                    if (title.includes("tornado warning")) alertClass = "alert-tornado-warning";
+                    else if (title.includes("tornado watch")) alertClass = "alert-tornado-watch";
+                    else if (title.includes("severe thunderstorm warning")) alertClass = "alert-severe-thunderstorm-warning";
+                    else if (title.includes("severe thunderstorm watch")) alertClass = "alert-severe-thunderstorm-watch";
+                    return `
+                        <div class="${alertClass} p-3 rounded">
+                            <strong>${alert.properties.event}</strong><br>
+                            Expires: ${new Date(alert.properties.ends).toLocaleString()}<br>
+                            <button onclick="this.nextElementSibling.classList.toggle('hidden')" class="text-sm underline text-blue-700">More detail</button>
+                            <div class="hidden mt-2 whitespace-pre-wrap text-sm">${alert.properties.description}</div>
                         </div>
-                        <a href="#" class="nav-item">Tropical</a>
-                    </div>
-                </div>
-            </div>
-        </nav>
-    </header>
+                    `;
+                }).join('');
+            }
+            card.classList.remove("hidden-by-default");
+        }
 
-    <main class="container mx-auto p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div class="md:col-span-2 space-y-4">
-            <section id="search-current-conditions" class="bg-white p-6 rounded-lg shadow-md">
-                <h2 class="text-2xl font-semibold mb-4">Search Location</h2>
-                <div class="flex space-x-2 mb-4">
-                    <input type="text" id="location-search" placeholder="Enter City, State or Zip Code" class="flex-grow p-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500">
-                    <button id="search-button" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-md">Search</button>
-                </div>
-                <div id="current-conditions-content" class="mt-4"></div>
-            </section>
+        document.getElementById("search-button").addEventListener("click", async () => {
+            const query = document.getElementById("location-search").value;
+            const coords = await geocodeLocation(query);
+            if (coords) {
+                fetchWeather(coords.latitude, coords.longitude);
+                document.getElementById("forecast-card").classList.remove("hidden-by-default");
+                document.getElementById("radar-card").classList.remove("hidden-by-default");
+                const radarEmbed = `<iframe width="100%" height="450" src="https://embed.windy.com/embed2.html?lat=${coords.latitude}&lon=${coords.longitude}&detailLat=${coords.latitude}&detailLon=${coords.longitude}&width=650&height=450&zoom=7&level=surface&overlay=radar&menu=&message=&marker=&calendar=&pressure=&type=map&location=coordinates&detail=&metricWind=default&metricTemp=default&radarRange=-1" frameborder="0"></iframe>`;
+                document.getElementById("windy-radar-embed").innerHTML = radarEmbed;
+            }
+        });
 
-            <section id="active-alerts-card" class="bg-white p-6 rounded-lg shadow-md hidden-by-default">
-                <h2 class="text-xl font-semibold mb-2">Active Alerts</h2>
-                <hr class="mb-4">
-                <div id="alerts-content"></div>
-            </section>
-
-            <section id="forecast-card" class="bg-white p-6 rounded-lg shadow-md hidden-by-default">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-semibold">5-Day Forecast</h2>
-                    <button id="toggle-forecast-days" class="text-sm text-red-500 hover:underline">Show 7-Day</button>
-                </div>
-                <div id="forecast-content" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 text-center"></div>
-                <div id="seven-day-forecast-content" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2 text-center mt-4 hidden"></div>
-            </section>
-
-            <section id="radar-card" class="bg-white p-6 rounded-lg shadow-md hidden-by-default">
-                <h2 class="text-xl font-semibold mb-4">Reflective Radar</h2>
-                <div id="windy-radar-embed" class="aspect-w-16 aspect-h-9"></div>
-            </section>
-        </div>
-
-        <div class="md:col-span-1 space-y-4">
-            <section id="weather-news" class="bg-white p-6 rounded-lg shadow-md">
-                <h2 class="text-xl font-semibold mb-4">Latest US Weather News</h2>
-                <div class="space-y-3">
-                    <div class="border-b pb-2">
-                        <h3 class="font-semibold text-red-600 hover:underline cursor-pointer">Major Storm System Developing in the Midwest</h3>
-                        <p class="text-sm text-gray-600">Forecasters are tracking a significant weather event expected to bring heavy rain and strong winds...</p>
-                    </div>
-                    <div class="border-b pb-2">
-                        <h3 class="font-semibold text-red-600 hover:underline cursor-pointer">Heatwave Continues to Grip the Southwest</h3>
-                        <p class="text-sm text-gray-600">Record-breaking temperatures are expected for the third consecutive day...</p>
-                    </div>
-                    <div>
-                        <h3 class="font-semibold text-red-600 hover:underline cursor-pointer">Tropical Update: New Disturbance Monitored</h3>
-                        <p class="text-sm text-gray-600">A tropical wave in the Atlantic is showing signs of organization...</p>
-                    </div>
-                </div>
-            </section>
-        </div>
-    </main>
-
-    <footer class="bg-gray-800 text-white text-center p-4 mt-8">
-        <p>&copy; <span id="current-year"></span> jWeather. All rights reserved.</p>
-    </footer>
-
-    <script>
-        document.getElementById('current-year').textContent = new Date().getFullYear();
-    </script>
+        document.getElementById("toggle-forecast-days").addEventListener("click", () => {
+            document.getElementById("seven-day-forecast-content").classList.toggle("hidden");
+        });
+    });
+</script>
 </body>
 </html>
