@@ -35,6 +35,14 @@
         .prose-invert h5, .prose-invert p { 
             /* Ensure text color is appropriate for dark backgrounds if needed */
         }
+        /* Custom animation for loading spinner */
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        .animate-spin {
+          animation: spin 1s linear infinite;
+        }
 
     </style>
 </head>
@@ -201,9 +209,9 @@
 
         const locationSpecificContent = [
             currentConditionsDisplay, 
-            activeAlertsCard,      
+            activeAlertsCard,    
             weatherForecastCard,   
-            radarCard              
+            radarCard            
         ];
 
         // --- State Variables ---
@@ -219,13 +227,24 @@
             if (element) element.classList.add('hidden'); 
         }
         
-        function updateSearchStatus(message) {
+        function updateSearchStatus(message, isLoading = false) {
             if (searchStatusEl) {
                 searchStatusEl.textContent = message;
                 if (message) {
                     showElement(searchStatusEl);
+                    // Add Tailwind classes for blue background, white bold text, and rounded corners
+                    searchStatusEl.classList.add('bg-blue-500', 'text-white', 'font-bold', 'rounded-full', 'px-3', 'py-1', 'inline-block');
+                    // Add a loading spinner if isLoading is true
+                    if (isLoading) {
+                        searchStatusEl.innerHTML = `<span class="animate-spin inline-block mr-2">🌀</span>${message}`;
+                    } else {
+                        searchStatusEl.innerHTML = message; // Remove spinner if not loading
+                    }
                 } else {
                     hideElement(searchStatusEl);
+                    // Remove Tailwind classes when hidden to reset styling
+                    searchStatusEl.classList.remove('bg-blue-500', 'text-white', 'font-bold', 'rounded-full', 'px-3', 'py-1', 'inline-block');
+                    searchStatusEl.innerHTML = ''; // Clear content
                 }
             }
         }
@@ -284,7 +303,7 @@
 
         // --- Geocoding Function (Using OpenStreetMap Nominatim) ---
         async function geocodeLocation(query) {
-            updateSearchStatus("Fetching location..."); 
+            updateSearchStatus("Finding location...", true); 
             const geocodeUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=1`;
             
             console.log("Nominatim URL:", geocodeUrl); 
@@ -318,7 +337,7 @@
 
         // --- Gemini API Function for Summarization ---
         async function summarizeAlertWithGemini(alertTextToSummarize) {
-            updateSearchStatus("Summarizing alert with Gemini...");
+            updateSearchStatus("Summarizing alert with Gemini...", true);
             const prompt = `Summarize this weather alert concisely for a general audience, highlighting the main threat, affected areas, and recommended actions. Keep it under 75 words:\n\n${alertTextToSummarize}`;
             let chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
             const payload = { contents: chatHistory };
@@ -344,8 +363,8 @@
                     result.candidates[0].content.parts.length > 0) {
                     const summary = result.candidates[0].content.parts[0].text;
                     console.log("Gemini Summary:", summary); 
-                    updateSearchStatus("Alert summarized."); 
-                     setTimeout(() => updateSearchStatus(''), 2000); 
+                    updateSearchStatus("Alert summarized.", false); 
+                    setTimeout(() => updateSearchStatus(''), 2000); 
                     return summary;
                 } else {
                     console.warn("Gemini API response structure unexpected or content missing.", result);
@@ -353,7 +372,7 @@
                 }
             } catch (error) {
                 console.error("Error summarizing with Gemini:", error);
-                updateSearchStatus("Could not summarize alert."); 
+                updateSearchStatus("Could not summarize alert.", false); 
                 setTimeout(() => updateSearchStatus(''), 2000); 
                 return "Could not generate summary. Please see full details below."; 
             }
@@ -382,7 +401,7 @@
                 
                 locationNameSpan.textContent = displayName;
                 console.log(`Using coordinates for ${displayName}: Lat ${lat}, Lon ${lon}`);
-                updateSearchStatus("Fetching weather details..."); 
+                updateSearchStatus("Fetching weather details...", true); 
 
                 const latFixed = parseFloat(lat.toFixed(4));
                 const lonFixed = parseFloat(lon.toFixed(4));
@@ -396,6 +415,7 @@
                 const observationStationsUrl = pointsData.properties.observationStations;
                 const alertsUrl = `${NWS_API_BASE_URL}/alerts/active?point=${latFixed},${lonFixed}`;
 
+                updateSearchStatus("Retrieving forecast and alerts...", true);
                 const [hourlyDataResponse, forecastDataResponse, observationStationsResponse, alertsDataResponse] = await Promise.all([
                     nwsFetch(forecastHourlyUrl),
                     nwsFetch(forecastUrl),
@@ -409,6 +429,7 @@
                 if (observationStationsResponse.features && observationStationsResponse.features.length > 0) {
                     const latestObsUrl = `${observationStationsResponse.features[0].id}/observations/latest`;
                     try {
+                        updateSearchStatus("Fetching latest observation...", true);
                         latestObservation = await nwsFetch(latestObsUrl);
                         latestObservation = latestObservation.properties; 
                     } catch (obsError) {
@@ -427,15 +448,15 @@
                     toggleForecastButton.textContent = "Show 7-Day Forecast";
                     displayForecast(storedForecastPeriods);  
                 } else {
-                     throw new Error("Forecast data is not available or in unexpected format.");
+                    throw new Error("Forecast data is not available or in unexpected format.");
                 }
                 
                 displayActualAlerts(alertsDataResponse.features); 
                 
-                embedWindyRadar(lat, lon);      
+                embedWindyRadar(lat, lon);     
                 
                 locationSpecificContent.forEach(showElement);
-                updateSearchStatus("Weather data loaded.");
+                updateSearchStatus("Weather data loaded.", false);
                 setTimeout(() => updateSearchStatus(''), 3000);
 
 
@@ -446,7 +467,7 @@
             } finally {
                 searchButton.textContent = 'Search';
                 searchButton.disabled = false;
-                 if (!searchErrorMessage.textContent && searchStatusEl.textContent.includes("loaded")) {
+                if (!searchErrorMessage.textContent && searchStatusEl.textContent.includes("loaded")) {
                     setTimeout(() => updateSearchStatus(''), 3000);
                 } else if (!searchErrorMessage.textContent) {
                     updateSearchStatus('');
@@ -495,7 +516,7 @@
                     humidity = `${currentPeriod.relativeHumidity.value}%`;
                 }
                 if (currentPeriod.dewpoint && currentPeriod.dewpoint.value !== null) {
-                     dewpointC = currentPeriod.dewpoint.value; 
+                    dewpointC = currentPeriod.dewpoint.value; 
                 }
             }
 
@@ -511,7 +532,7 @@
             if (observation?.heatIndex?.value !== null && !isNaN(observation?.heatIndex?.value)) {
                 feelsLikeText = `${Math.round(observation.heatIndex.value * 9/5 + 32)}°F (Heat Index)`;
             } else if (observation?.windChill?.value !== null && !isNaN(observation?.windChill?.value)) {
-                 feelsLikeText = `${Math.round(observation.windChill.value * 9/5 + 32)}°F (Wind Chill)`;
+                feelsLikeText = `${Math.round(observation.windChill.value * 9/5 + 32)}°F (Wind Chill)`;
             } else if (tempF !== null) { 
                 feelsLikeText = `${tempF}°F`;
             }
@@ -565,11 +586,8 @@
                 const dayName = new Date(currentDayPeriod.startTime).toLocaleDateString('en-US', { weekday: 'short' });
                 let nightPeriodForThisDay = null;
 
-                if (
-                  i + 1 < periods.length &&
-                  !periods[i+1].isDaytime &&
-                  new Date(periods[i+1].startTime).toDateString() === new Date(currentDayPeriod.startTime).toDateString()
-                ) {
+                if (i + 1 < periods.length && !periods[i+1].isDaytime &&
+                    new Date(periods[i+1].startTime).toDateString() === new Date(currentDayPeriod.startTime).toDateString()) {
                     nightPeriodForThisDay = periods[i+1];
                 }
                 
@@ -594,7 +612,7 @@
                             <p class="text-xs text-gray-600 truncate" title="${nightPeriodForThisDay.shortForecast}">${nightPeriodForThisDay.shortForecast}</p>
                         </div>`;
                 } else {
-                     dayForecastHTML += `<div class="night-part mt-2 pt-2 border-t border-gray-200"><p class="text-xs text-gray-500 font-medium">NIGHT</p><p class="text-xs text-gray-500">N/A</p></div>`;
+                    dayForecastHTML += `<div class="night-part mt-2 pt-2 border-t border-gray-200"><p class="text-xs text-gray-500 font-medium">NIGHT</p><p class="text-xs text-gray-500">N/A</p></div>`;
                 }
                 dayForecastHTML += `</div>`;
                 forecastContentArea.insertAdjacentHTML('beforeend', dayForecastHTML);
@@ -630,14 +648,14 @@
                     else if (eventLower.includes("severe thunderstorm")) { colorScheme = 'bg-yellow-400 border-yellow-600 text-yellow-900'; } 
                     else { colorScheme = 'bg-red-200 border-red-400 text-red-800';} 
                 } else if (eventLower.includes("watch")) {
-                     alertIconEmoji = '❗';
-                     if (eventLower.includes("tornado")) { 
+                    alertIconEmoji = '❗';
+                    if (eventLower.includes("tornado")) { 
                         colorScheme = 'bg-red-100 border-red-400 text-red-800'; 
                     } else if (eventLower.includes("severe thunderstorm")) { 
                         colorScheme = 'bg-yellow-100 border-yellow-400 text-yellow-800'; 
                     }
                 } else if (eventLower.includes("advisory")) {
-                     colorScheme = 'bg-blue-100 border-blue-400 text-blue-800'; 
+                    colorScheme = 'bg-blue-100 border-blue-400 text-blue-800'; 
                 }
                 
                 let expiresText = "N/A";
@@ -687,8 +705,8 @@
                                 <button id="${nwsToggleId}" class="nws-text-toggle text-xs ${colorScheme.includes('text-white') ? 'hover:text-gray-200' : 'text-blue-600 hover:text-blue-800'} hover:underline focus:outline-none mb-2">Show Full NWS Text</button>
                                 <div id="${nwsFullTextId}" class="nws-full-text hidden prose ${colorScheme.includes('text-white') ? 'prose-invert' : ''}">
                                     <h5 class="font-semibold mt-2">NWS Details:</h5>
-                                    <p class="text-sm mt-1"><strong>Severity:</strong> ${props.severity} | <strong>Urgency:</strong> ✨ | <strong>Certainty:</strong> ✨</p>
-                                    <p class="text-sm mt-1"><strong>Areas Affected:</strong> ✨</p>
+                                    <p class="text-sm mt-1"><strong>Severity:</strong> ${props.severity} | <strong>Urgency:</strong> ${props.urgency} | <strong>Certainty:</strong> ${props.certainty}</p>
+                                    <p class="text-sm mt-1"><strong>Areas Affected:</strong> ${props.areaDesc}</p>
                                     <h5 class="font-semibold mt-2">Headline:</h5>
                                     <p>${props.headline ? props.headline.replace(/\n/g, '<br>') : 'N/A'}</p>
                                     <h5 class="font-semibold mt-2">Description:</h5>
@@ -723,7 +741,7 @@
                         detailsContentDiv.classList.toggle('hidden'); 
                         icon.classList.toggle('rotate-90'); 
 
-                        if (!isCurrentlyHidden && geminiSummaryDiv.dataset.summarized !== 'true') { 
+                        if (isCurrentlyHidden && geminiSummaryDiv.dataset.summarized !== 'true') { // Corrected condition here
                             geminiSummaryDiv.querySelector('p').textContent = 'Summarizing with Gemini...'; 
                             try {
                                 const summary = await summarizeAlertWithGemini(fullAlertText);
@@ -740,4 +758,57 @@
                         }
 
                     } else {
-                        console.error("One or more target elements for alert toggle not found!");
+                        console.error("One or more target elements for alert toggle not found!"); 
+                    }
+                });
+            });
+            
+            document.querySelectorAll('.nws-text-toggle').forEach(button => {
+                button.addEventListener('click', function() {
+                    const nwsTextId = this.id.replace('nws-toggle-', 'nws-full-text-'); // Construct ID based on button
+                    const nwsTextDiv = document.getElementById(nwsTextId);
+                    if (nwsTextDiv) {
+                        nwsTextDiv.classList.toggle('hidden');
+                        this.textContent = nwsTextDiv.classList.contains('hidden') ? 'Show Full NWS Text' : 'Hide Full NWS Text';
+                    }
+                });
+            });
+        }
+
+
+        function embedWindyRadar(lat, lon) {
+            const zoomLevel = 7; 
+            const radarUrl = `https://embed.windy.com/embed2.html?lat=${lat}&lon=${lon}&zoom=${zoomLevel}&layer=radar&menuDisable=true&messageDisable=true&markerDisable=true&calendar=now&pressureDisable=true&type=map&location=coordinates&detailDisable=true&metricWind=mph&metricTemp=%C2%B0F&radarRange=-1`;
+            windyRadarContainer.innerHTML = `<iframe width="100%" height="100%" src="${radarUrl}" frameborder="0" allowfullscreen></iframe>`;
+        }
+
+        function displayMockNews() { 
+            newsContentArea.innerHTML = ''; 
+            const mockNewsItems = [
+                { headline: "Major Storm System Developing in the Midwest", summary: "Forecasters are tracking a significant weather system...", source: "NWS Weather Brief", date: "June 3, 2025" },
+                { headline: "Heat Advisory Issued for Southwestern States", summary: "Temperatures are expected to soar above 100°F...", source: "Local Weather Channel", date: "June 2, 2025" },
+                { headline: "Tropical Update: Watching Area of Interest", summary: "Meteorologists are monitoring a tropical wave...", source: "National Hurricane Center", date: "June 3, 2025" }
+            ];
+            mockNewsItems.forEach(item => {
+                const newsHTML = `
+                    <article class="mb-4 pb-4 border-b border-gray-200 last:border-b-0">
+                        <h3 class="font-semibold text-lg text-gray-800"><a href="#" target="_blank" rel="noopener noreferrer" class="hover:text-blue-600 hover:underline">${item.headline}</a></h3>
+                        <p class="text-sm text-gray-600 mt-1">${item.summary}</p>
+                        <p class="text-xs text-gray-400 mt-1">${item.source} - ${item.date}</p>
+                    </article>`;
+                newsContentArea.insertAdjacentHTML('beforeend', newsHTML);
+            });
+        }
+        
+        // --- Initial Setup ---
+        document.querySelectorAll('.hidden-by-default').forEach(el => { 
+            el.classList.add('hidden');
+            el.classList.remove('hidden-by-default');
+        });
+        
+        locationSpecificContent.forEach(hideElement); 
+        displayMockNews(); 
+    </script>
+
+</body>
+</html>
