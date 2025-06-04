@@ -1,1 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>jWeather</title>
+  <!-- TailwindCSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Make the dropdown appear on hover */
+    .group:hover .group-hover\:block {
+      display: block;
+    }
+    .card {
+      @apply bg-white shadow-lg rounded-lg p-6 mb-6;
+    }
+    .condition-summary-grid {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.5rem 1rem;
+      align-items: center;
+    }
+    .alert-item {
+      @apply mb-3 rounded-lg shadow overflow-hidden;
+    }
+    .alert-button {
+      @apply w-full flex justify-between items-center px-6 py-4 focus:outline-none;
+    }
+    .alert-details {
+      @apply px-6 pb-4 hidden text-xs;
+    }
+    .prose {
+      @apply max-w-none;
+    }
+    .prose h5 {
+      @apply font-semibold mt-2 mb-1;
+    }
+    .prose p {
+      @apply mb-2;
+    }
+    .prose-invert h5,
+    .prose-invert p {
+      /* for dark backgrounds if needed */
+    }
+  </style>
+</head>
+<body class="bg-gray-100 font-sans">
 
+  <!-- HEADER -->
+  <header class="bg-red-600 text-white p-4 shadow-md">
+    <div class="container mx-auto flex justify-between items-center">
+      <div class="flex items-center">
+        <svg class="w-10 h-10 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M2.25 15a4.5 4.5 0 0 0 4.5 4.5H18a3.75 3.75 0 0 0 1.332-7.257 3 3 0 0 0-1.991-5.189 5.25 5.25 0 0 0-10.513 2.288c-.887-.462-1.868-.682-2.847-.682A4.5 4.5 0 0 0 2.25 15Z" />
+        </svg>
+        <h1 class="text-3xl font-bold">jWeather</h1>
+      </div>
+      <nav>
+        <ul class="flex space-x-6 text-lg">
+          <li class="relative group">
+            <a href="#" class="hover:text-gray-300 transition-colors duration-200 flex items-center">
+              Severe Weather
+              <svg class="w-4 h-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.27a.75.75 0 01.02-1.06z" clip-rule="evenodd"/>
+              </svg>
+            </a>
+            <ul class="absolute right-0 lg:left-0 mt-2 w-56 bg-red-700 rounded-md shadow-xl hidden group-hover:block z-10 py-1">
+              <li><a href="#" class="block px-4 py-2 text-sm text-white hover:bg-red-800">Outlook</a></li>
+              <li><a href="#" class="block px-4 py-2 text-sm text-white hover:bg-red-800">Mesoscale Discussions</a></li>
+              <li><a href="#" class="block px-4 py-2 text-sm text-white hover:bg-red-800">Parameters</a></li>
+              <li><a href="#" class="block px-4 py-2 text-sm text-white hover:bg-red-800">Storm Reports</a></li>
+              <li><a href="#" class="block px-4 py-2 text-sm text-white hover:bg-red-800">Severe Weather 101</a></li>
+            </ul>
+          </li>
+          <li><a href="#" class="hover:text-gray-300 transition-colors duration-200">Tropical</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT -->
+  <main class="container mx-auto p-4 md:p-6 space-y-8">
+
+    <!-- SEARCH + CURRENT CONDITIONS -->
+    <div class="flex flex-col lg:flex-row lg:space-x-6">
+      <!-- LEFT COLUMN: Search + Current -->
+      <div class="lg:w-2/3 w-full">
+        <section id="search-current-conditions-card" class="card">
+          <h2 class="text-2xl font-semibold mb-4 text-gray-700">Search Location</h2>
+          <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 mb-2">
+            <input
+              type="text"
+              id="location-search-input"
+              placeholder="Enter City, State or Zip Code"
+              class="flex-grow p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+            />
+            <button
+              id="search-button"
+              class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-md transition-colors duration-200"
+            >
+              Search
+            </button>
+          </div>
+          <div id="search-status" class="text-sm text-gray-600 mt-2 hidden"></div>
+          <div id="search-error-message" class="text-red-500 mt-2 hidden"></div>
+
+          <div id="current-conditions-display" class="hidden mt-4">
+            <h3 class="text-xl font-semibold mb-3 text-gray-700">
+              Current Conditions for
+              <span id="location-name" class="text-blue-600">[Location]</span>
+            </h3>
+            <div id="current-condition-summary-box" class="bg-white p-4 rounded-lg mb-4 shadow">
+              <div class="flex items-center mb-3 pb-3 border-b border-gray-300">
+                <img
+                  id="summary-condition-icon"
+                  src="https://placehold.co/64x64/e2e8f0/94a3b8?text=N/A"
+                  alt="Weather condition"
+                  class="w-16 h-16 mr-4"
+                />
+                <p id="summary-condition-text" class="text-2xl font-bold text-gray-800">Fetching...</p>
+              </div>
+              <div class="condition-summary-grid text-sm sm:text-base">
+                <p class="font-medium text-gray-600">Temperature:</p>
+                <p id="summary-temp" class="font-semibold text-gray-800">[Temp]</p>
+
+                <p class="font-medium text-gray-600">Feels Like:</p>
+                <p id="summary-feels-like" class="font-semibold text-gray-800">[Feels Like]</p>
+
+                <p class="font-medium text-gray-600">Wind:</p>
+                <p id="summary-wind" class="font-semibold text-gray-800">[Wind]</p>
+
+                <p class="font-medium text-gray-600">Humidity:</p>
+                <p id="summary-humidity" class="font-semibold text-gray-800">[Humidity]</p>
+
+                <p class="font-medium text-gray-600">Dew Point:</p>
+                <div id="summary-dewpoint-container">
+                  <span id="summary-dewpoint-value" class="font-semibold text-gray-800">[Value]</span>
+                  <span id="summary-dewpoint-desc" class="text-gray-700 ml-1">([Description])</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- RIGHT COLUMN: Latest US Weather News -->
+      <div class="lg:w-1/3 w-full">
+        <section id="weather-news-card" class="card">
+          <h2 class="text-2xl font-semibold mb-4 text-gray-700">Latest US Weather News</h2>
+          <div id="news-content-area">
+            <!-- Filled by JS -->
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- ACTIVE ALERTS -->
+    <section id="active-alerts-card" class="card">
+      <h2 class="text-2xl font-semibold text-gray-700 mb-2">Active Alerts</h2>
+      <hr class="border-gray-300 mb-4" />
+      <div id="alerts-content-area">
+        <!-- Filled by JS -->
+      </div>
+    </section>
+
+    <!-- FORECAST -->
+    <section id="weather-forecast-card" class="card hidden">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-2xl font-semibold text-gray-700">Weather Forecast</h2>
+        <button id="toggle-forecast-days" class="text-blue-600 hover:underline text-sm focus:outline-none">
+          Show 7-Day Forecast
+        </button>
+      </div>
+      <div id="forecast-content-area" class="flex flex-col space-y-4">
+        <!-- JS injects here -->
+      </div>
+    </section>
+
+    <!-- RADAR EMBED -->
+    <section id="radar-embed-card" class="card hidden">
+      <h2 class="text-2xl font-semibold mb-4 text-gray-700">Reflective Radar</h2>
+      <div
+        id="windy-radar-container"
+        class="w-full h-[300px] sm:h-[400px] md:h-[500px] bg-gray-200 rounded-md flex items-center justify-center overflow-hidden"
+      >
+        <p class="text-gray-500">Radar will load here once a location is searched.</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="text-center p-6 text-gray-500 text-sm border-t border-gray-200 mt-8">
+    &copy; <span id="current-year"></span> jWeather. All rights reserved.
+  </footer>
+
+  <!-- JAVASCRIPT -->
+  <script>
+    const NWS_API_BASE_URL = "https://api.weather.gov";
+    const NWS_USER_AGENT = "(jWeather App, your.email@example.com)";
+
+    // DOM references
+    const searchInput = document.getElementById("location-search-input");
+    const searchButton = document.getElementById("search-button");
+    const searchStatusEl = document.getElementById("search-status");
+    const searchErrorMessage = document.getElementById("search-error-message");
+
+    const currentConditionsDisplay = document.getElementById("current-conditions-display");
+    const locationNameSpan = document.getElementById("location-name");
+    const summaryConditionIconEl = document.getElementById("summary-condition-icon");
+    const summaryConditionTextEl = document.getElementById("summary-condition-text");
+    const summaryTempEl = document.getElementById("summary-temp");
+    const summaryFeelsLikeEl = document.getElementById("summary-feels-like");
+    const summaryWindEl = document.getElementById("summary-wind");
+    const summaryHumidityEl = document.getElementById("summary-humidity");
+    const summaryDewpointValueEl = document.getElementById("summary-dewpoint-value");
+    const summaryDewpointDescEl = document.getElementById("summary-dewpoint-desc");
+
+    const newsContentArea = document.getElementById("news-content-area");
+
+    const alertsContentArea = document.getElementById("alerts-content-area");
+
+    const weatherForecastCard = document.getElementById("weather-forecast-card");
+    const forecastContentArea = document.getElementById("forecast-content-area");
+    const toggleForecastButton = document.getElementById("toggle-forecast-days");
+
+    const radarCard = document.getElementById("radar-embed-card");
+    const windyRadarContainer = document.getElementById("windy-radar-container");
+
+    // Sections to reveal after a successful search
+    const locationSpecificContent = [
+      currentConditionsDisplay,
+      alertsContentArea.parentElement, // "Active Alerts" card
+      weatherForecastCard,
+      radarCard
+    ];
+
+    let isShowing7DayForecast = false;
+    let storedForecastPeriods = null;
+
+    function showElement(el) {
+      if (el) el.classList.remove("hidden");
+    }
+    function hideElement(el) {
+      if (el) el.classList.add("hidden");
+    }
+    function updateSearchStatus(msg) {
+      if (!searchStatusEl) return;
+      searchStatusEl.textContent = msg;
+      if (msg) showElement(searchStatusEl);
+      else hideElement(searchStatusEl);
+    }
+    function displaySearchError(msg) {
+      searchErrorMessage.textContent = msg;
+      showElement(searchErrorMessage);
+      updateSearchStatus("");
+    }
+    function clearSearchError() {
+      searchErrorMessage.textContent = "";
+      hideElement(searchErrorMessage);
+    }
+
+    async function nwsFetch(url) {
+      const resp = await fetch(url, {
+        headers: {
+          "User-Agent": NWS_USER_AGENT,
+          "Accept": "application/geo+json"
+        }
+      });
+      if (!resp.ok) {
+        console.error(`NWS API Error ${resp.status} for ${url}`);
+        throw new Error(`NWS request failed: ${resp.status}`);
+      }
+      return resp.json();
+    }
+
+    function getDewPointDescription(dpF) {
+      if (dpF == null || isNaN(dpF)) return "N/A";
+      if (dpF < 50) return "Pleasantly Dry";
+      if (dpF < 55) return "Comfortable";
+      if (dpF < 60) return "Becoming a Bit Humid";
+      if (dpF < 65) return "Humid";
+      if (dpF < 70) return "Sticky";
+      if (dpF < 75) return "Muggy & Uncomfortable";
+      return "Oppressive";
+    }
+
+    function formatExpireTime(isoString) {
+      if (!isoString) return "";
+      const dt = new Date(isoString);
+      return dt.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        timeZoneName: "short"
+      });
+    }
+
+    document.getElementById("current-year").textContent = new Date().getFullYear();
+
+    searchButton.addEventListener("click", handleSearch);
+    searchInput.addEventListener("keypress", e => {
+      if (e.key === "Enter") handleSearch();
+    });
+    toggleForecastButton.addEventListener("click", () => {
+      isShowing7DayForecast = !isShowing7DayForecast;
+      displayForecast(storedForecastPeriods);
+    });
+
+    async function geocodeLocation(query) {
+      updateSearchStatus("Fetching location...");
+      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=1`;
+      const resp = await fetch(url, {
+        headers: { "User-Agent": NWS_USER_AGENT }
+      });
+      if (!resp.ok) {
+        throw new Error(`Geocoder failed: ${resp.status}`);
+      }
+      const arr = await resp.json();
+      if (!arr.length) {
+        throw new Error(`Location "${query}" not found.`);
+      }
+      return {
+        lat: parseFloat(arr[0].lat),
+        lon: parseFloat(arr[0].lon),
+        displayName: arr[0].display_name
+      };
+    }
+
+    async function handleSearch() {
+      const query = searchInput.value.trim();
+      clearSearchError();
+      locationSpecificContent.forEach(hideElement);
+
+      if (!query) {
+        displaySearchError("Please enter a location.");
+        return;
+      }
+
+      searchButton.textContent = "Searching...";
+      searchButton.disabled = true;
+
+      try {
+        const { lat, lon, displayName } = await geocodeLocation(query);
+        locationNameSpan.textContent = displayName;
+        updateSearchStatus("Fetching weather details...");
+
+        const latFixed = +lat.toFixed(4);
+        const lonFixed = +lon.toFixed(4);
+        const pointsUrl = `${NWS_API_BASE_URL}/points/${latFixed},${lonFixed}`;
+        const ptsData = await nwsFetch(pointsUrl);
+
+        const forecastUrl = ptsData.properties.forecast;
+        const forecastHourlyUrl = ptsData.properties.forecastHourly;
+        const obsStationsUrl = ptsData.properties.observationStations;
+        const alertsUrl = `${NWS_API_BASE_URL}/alerts/active?point=${latFixed},${lonFixed}`;
+
+        const [
+          hourlyData,
+          forecastData,
+          obsStationsData,
+          alertsData
+        ] = await Promise.all([
+          nwsFetch(forecastHourlyUrl),
+          nwsFetch(forecastUrl),
+          nwsFetch(obsStationsUrl),
+          nwsFetch(alertsUrl)
+        ]);
+
+        let currentPeriod = hourlyData.properties.periods[0];
+        let latestObs = null;
+        if (obsStationsData.features.length) {
+          const latestObsUrl = `${obsStationsData.features[0].id}/observations/latest`;
+          try {
+            const obsResp = await nwsFetch(latestObsUrl);
+            latestObs = obsResp.properties;
+          } catch (_) {
+            console.warn("Failed to fetch latest observation.");
+          }
+        }
+
+        displayCurrentConditions(currentPeriod, latestObs);
+
+        if (forecastData.properties && forecastData.properties.periods) {
+          storedForecastPeriods = forecastData.properties.periods;
+          isShowing7DayForecast = false;
+          toggleForecastButton.textContent = "Show 7-Day Forecast";
+          displayForecast(storedForecastPeriods);
+        } else {
+          throw new Error("Forecast data unavailable.");
+        }
+
+        displayActualAlerts(alertsData.features);
+        embedWindyRadar(lat, lon);
+
+        locationSpecificContent.forEach(showElement);
+        updateSearchStatus("Weather data loaded.");
+        setTimeout(() => updateSearchStatus(""), 3000);
+
+      } catch (err) {
+        console.error(err);
+        displaySearchError(err.message);
+        locationSpecificContent.forEach(hideElement);
+      } finally {
+        searchButton.textContent = "Search";
+        searchButton.disabled = false;
+        if (!searchErrorMessage.textContent && searchStatusEl.textContent.includes("loaded")) {
+          setTimeout(() => updateSearchStatus(""), 3000);
+        } else if (!searchErrorMessage.textContent) {
+          updateSearchStatus("");
+        }
+      }
+    }
+
+    function displayCurrentConditions(currentPeriod, observation) {
+      let tempF = null, windSpeed = "N/A", windDir = "", humidity = "N/A", dewpointC = null;
+      let iconUrl = currentPeriod.icon || "https://placehold.co/64x64/e2e8f0/94a3b8?text=N/A";
+      let conditionText = currentPeriod.shortForecast || "N/A";
+
+      if (observation) {
+        if (observation.temperature?.value != null && !isNaN(observation.temperature.value)) {
+          tempF = Math.round(observation.temperature.value * 9/5 + 32);
+        }
+        if (observation.windSpeed?.value != null && !isNaN(observation.windSpeed.value)) {
+          windSpeed = Math.round(observation.windSpeed.value * 2.23694);
+        }
+        if (observation.windDirection?.value != null) {
+          windDir = getWindDir(observation.windDirection.value);
+        }
+        if (observation.relativeHumidity?.value != null && !isNaN(observation.relativeHumidity.value)) {
+          humidity = `${Math.round(observation.relativeHumidity.value)}%`;
+        }
+        if (observation.dewpoint?.value != null && !isNaN(observation.dewpoint.value)) {
+          dewpointC = observation.dewpoint.value;
+        }
+        if (observation.icon) iconUrl = observation.icon;
+        if (observation.textDescription) conditionText = observation.textDescription;
+      } else {
+        if (currentPeriod.temperature != null) {
+          tempF = currentPeriod.temperatureUnit === "F"
+            ? currentPeriod.temperature
+            : Math.round(currentPeriod.temperature * 9/5 + 32);
+        }
+        if (currentPeriod.windSpeed) windSpeed = currentPeriod.windSpeed.split(" ")[0];
+        if (currentPeriod.windDirection) windDir = currentPeriod.windDirection;
+        if (currentPeriod.relativeHumidity?.value != null) {
+          humidity = `${currentPeriod.relativeHumidity.value}%`;
+        }
+        if (currentPeriod.dewpoint?.value != null) {
+          dewpointC = currentPeriod.dewpoint.value;
+        }
+      }
+
+      summaryTempEl.textContent = tempF != null ? `${tempF}°F` : "N/A";
+      summaryWindEl.textContent = (windSpeed !== "N/A" || windDir)
+        ? `${windSpeed} mph ${windDir}`.trim()
+        : "N/A";
+      summaryHumidityEl.textContent = humidity;
+
+      const dewF = (dewpointC != null && !isNaN(dewpointC))
+        ? Math.round(dewpointC * 9/5 + 32)
+        : null;
+      summaryDewpointValueEl.textContent = dewF != null ? `${dewF}°F` : "N/A";
+      summaryDewpointDescEl.textContent = `(${getDewPointDescription(dewF)})`;
+
+      let feelsLike = "N/A";
+      if (observation?.heatIndex?.value != null && !isNaN(observation.heatIndex.value)) {
+        feelsLike = `${Math.round(observation.heatIndex.value * 9/5 + 32)}°F (Heat Index)`;
+      } else if (observation?.windChill?.value != null && !isNaN(observation.windChill.value)) {
+        feelsLike = `${Math.round(observation.windChill.value * 9/5 + 32)}°F (Wind Chill)`;
+      } else if (tempF != null) {
+        feelsLike = `${tempF}°F`;
+      }
+      summaryFeelsLikeEl.textContent = feelsLike;
+
+      summaryConditionIconEl.src = iconUrl;
+      summaryConditionIconEl.alt = conditionText;
+      summaryConditionTextEl.textContent = conditionText;
+    }
+
+    function getWindDir(deg) {
+      const val = Math.floor((deg / 22.5) + 0.5);
+      const arr = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"];
+      return arr[val % 16];
+    }
+
+    function displayForecast(periods) {
+      forecastContentArea.innerHTML = "";
+      if (!periods) {
+        toggleForecastButton.textContent = isShowing7DayForecast
+          ? "Show 5-Day Forecast"
+          : "Show 7-Day Forecast";
+        if (searchButton.disabled) {
+          forecastContentArea.innerHTML = '<p class="text-gray-500 text-center">Loading forecast...</p>';
+        }
+        return;
+      }
+
+      const daysToShow = isShowing7DayForecast ? 7 : 5;
+      toggleForecastButton.textContent = isShowing7DayForecast
+        ? "Show 5-Day Forecast"
+        : "Show 7-Day Forecast";
+
+      let count = 0;
+      for (let i = 0; i < periods.length && count < daysToShow; ) {
+        const dayP = periods[i];
+        if (!dayP.isDaytime) {
+          i++;
+          continue;
+        }
+        // Find matching night period
+        let nightP = null;
+        if (i + 1 < periods.length
+            && !periods[i+1].isDaytime
+            && new Date(periods[i+1].startTime).toDateString() === new Date(dayP.startTime).toDateString()
+        ) {
+          nightP = periods[i+1];
+        }
+
+        const d = new Date(dayP.startTime);
+        const weekday = d.toLocaleDateString("en-US", { weekday: "long" });
+        const mm = String(d.getMonth() + 1).padStart(2, "0");
+        const dd = String(d.getDate()).padStart(2, "0");
+        const dateFmt = `(${mm}/${dd})`;
+        const dayLabel = `${weekday} ${dateFmt}`;
+        const nightLabel = `${weekday} Night ${dateFmt}`;
+
+        const dayPrecip = dayP.probabilityOfPrecipitation?.value;
+        const dayPrecipHTML = dayPrecip != null
+          ? `<p class="text-xs text-gray-600 mt-1">Precip: ${dayPrecip}%</p>`
+          : "";
+
+        let nightPrecipHTML = "";
+        if (nightP) {
+          const np = nightP.probabilityOfPrecipitation?.value;
+          if (np != null) {
+            nightPrecipHTML = `<p class="text-xs text-gray-600 mt-1">Precip: ${np}%</p>`;
+          }
+        }
+
+        const dayIcon = dayP.icon || "";
+        const nightIcon = nightP ? (nightP.icon || "") : "";
+
+        const dayCard = `
+          <div class="flex-1 bg-gray-50 p-4 rounded-lg shadow">
+            <p class="text-sm font-bold text-gray-700">${dayLabel}</p>
+            <div class="flex items-center mt-1 space-x-2">
+              <p class="text-2xl font-bold text-red-600">${dayP.temperature}°${dayP.temperatureUnit}</p>
+              <img src="${dayIcon}" alt="${dayP.shortForecast}" class="w-10 h-10" />
+            </div>
+            <p class="mt-1 text-xs text-gray-600 truncate" title="${dayP.shortForecast}">
+              ${dayP.shortForecast}
+            </p>
+            ${dayPrecipHTML}
+          </div>`;
+
+        const nightCard = `
+          <div class="flex-1 bg-gray-50 p-4 rounded-lg shadow">
+            <p class="text-sm font-bold text-gray-700">${nightLabel}</p>
+            <div class="flex items-center mt-1 space-x-2">
+              <p class="text-2xl font-bold text-blue-600">${
+                nightP ? `${nightP.temperature}°${nightP.temperatureUnit}` : "N/A"
+              }</p>
+              <img src="${nightIcon}" alt="${nightP ? nightP.shortForecast : ""}" class="w-10 h-10" />
+            </div>
+            <p class="mt-1 text-xs text-gray-600 truncate" title="${
+              nightP ? nightP.shortForecast : ""
+            }">
+              ${nightP ? nightP.shortForecast : ""}
+            </p>
+            ${nightPrecipHTML}
+          </div>`;
+
+        const wrap = `
+          <div class="flex flex-col sm:flex-row sm:space-x-4">
+            ${dayCard}
+            ${nightCard}
+          </div>`;
+
+        forecastContentArea.insertAdjacentHTML("beforeend", wrap);
+
+        count++;
+        i++;
+        if (nightP) i++;
+      }
+    }
+
+    function displayActualAlerts(alerts) {
+      alertsContentArea.innerHTML = "";
+      if (!alerts || !alerts.length) {
+        alertsContentArea.innerHTML = `
+          <div class="flex items-center text-green-700 p-4 bg-green-100 rounded-lg shadow">
+            <svg class="w-5 h-5 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd"
+                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 
+12.586l7.293-7.293a1 1 0 011.414 0z"
+                    clip-rule="evenodd"/>
+            </svg>
+            <span class="font-medium">No active alerts for this location.</span>
+          </div>`;
+        return;
+      }
+
+      alerts.forEach((alert, idx) => {
+        const p = alert.properties;
+        const evtLower = p.event.toLowerCase();
+        const expTime = formatExpireTime(p.ends || p.expires);
+        const expText = expTime ? `Expires at ${expTime}` : "";
+
+        let briefDesc = "";
+        if (p.description) {
+          const fp = p.description.indexOf(".");
+          briefDesc = fp !== -1 ? p.description.slice(0, fp + 1) : p.description;
+        }
+
+        let briefInst = "";
+        if (p.instruction) {
+          const fp2 = p.instruction.indexOf(".");
+          briefInst = fp2 !== -1 ? p.instruction.slice(0, fp2 + 1) : p.instruction;
+        }
+
+        let html = "";
+        if (evtLower.includes("warning")) {
+          html = `
+            <div class="alert-item border-l-4 border-red-700">
+              <div class="bg-red-600 text-white">
+                <button class="alert-button" data-alert-index="${idx}">
+                  <div class="flex items-center space-x-2">
+                    <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd"
+                        d="M8.257 3.099c.765-1.36 2.721-1.36 3.486 0l6.516 11.587c.75 
+1.336-.213 2.994-1.743 2.994H3.485c-1.53 
