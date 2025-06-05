@@ -44,6 +44,19 @@
           animation: spin 1s linear infinite;
         }
 
+        /* Styles for the autocomplete dropdown - REMOVED */
+        /*
+        .autocomplete-suggestions {
+            @apply absolute w-full bg-white border border-gray-300 rounded-md shadow-lg mt-1 max-h-60 overflow-y-auto z-10;
+        }
+        .autocomplete-suggestion-item {
+            @apply p-3 cursor-pointer hover:bg-blue-100;
+        }
+        .autocomplete-suggestion-item:not(:last-child) {
+            @apply border-b border-gray-200;
+        }
+        */
+
     </style>
 </head>
 <body class="bg-gray-100 font-sans">
@@ -87,9 +100,10 @@
             <div class="lg:w-2/3 w-full">
                 <section id="search-current-conditions-card" class="card">
                     <h2 class="text-2xl font-semibold mb-4 text-gray-700">Search Location</h2>
-                    <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 mb-2">
+                    <div class="relative flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 mb-2">
                         <input type="text" id="location-search-input" placeholder="Enter City, State or Zip Code" class="flex-grow p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none">
                         <button id="search-button" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-md transition-colors duration-200">Search</button>
+                        <!-- Removed <div id="location-suggestions" class="autocomplete-suggestions hidden"></div> -->
                     </div>
                     <div id="search-status" class="text-sm text-gray-600 mt-2 hidden"></div> 
                     <div id="search-error-message" class="text-red-500 mt-2 hidden"></div>
@@ -112,14 +126,8 @@
                                 <p class="font-medium text-gray-600">Wind:</p>
                                 <p id="summary-wind" class="font-semibold text-gray-800">[Wind]</p>
                                 
-                                <p class="font-medium text-gray-600">Humidity:</p>
-                                <p id="summary-humidity" class="font-semibold text-gray-800">[Humidity]</p>
-                                
-                                <p class="font-medium text-gray-600">Dew Point:</p>
-                                <div id="summary-dewpoint-container">
-                                    <span id="summary-dewpoint-value" class="font-semibold text-gray-800">[Value]</span>
-                                    <span id="summary-dewpoint-desc" class="text-gray-700 ml-1">([Description])</span>
-                                </div>
+                                <p class="font-medium text-gray-600">Humidity/Dew Point:</p>
+                                <p id="summary-humidity-dewpoint" class="font-semibold text-gray-800">[Humidity/Dew Point]</p>
                             </div>
                         </div>
                     </div>
@@ -156,8 +164,8 @@
             </div>
         </section>
 
-        <section id="radar-embed-card" class="card hidden">
-            <h2 class="text-2xl font-semibold mb-4 text-gray-700">Reflective Radar</h2>
+        <section id="radar-embed-card" class="card">
+            <h2 class="text-2xl font-semibold mb-4 text-gray-700">Weather Radar <span class="text-sm text-gray-500">(Powered by Windy.com)</span></h2>
             <div id="windy-radar-container" class="w-full h-[300px] sm:h-[400px] md:h-[500px] bg-gray-200 rounded-md flex items-center justify-center overflow-hidden">
                 <p class="text-gray-500">Radar will load here once a location is searched.</p>
             </div>
@@ -189,9 +197,8 @@
         const summaryFeelsLikeEl = document.getElementById('summary-feels-like'); 
         const summaryWindEl = document.getElementById('summary-wind');
         const summaryHumidityEl = document.getElementById('summary-humidity');
-        const summaryDewpointValueEl = document.getElementById('summary-dewpoint-value'); 
-        const summaryDewpointDescEl = document.getElementById('summary-dewpoint-desc'); 
-        
+        const summaryHumidityDewpointEl = document.getElementById('summary-humidity-dewpoint');
+
         const searchErrorMessage = document.getElementById('search-error-message');
 
         const activeAlertsCard = document.getElementById('active-alerts-card'); 
@@ -229,22 +236,23 @@
         
         function updateSearchStatus(message, isLoading = false) {
             if (searchStatusEl) {
-                searchStatusEl.textContent = message;
                 if (message) {
                     showElement(searchStatusEl);
-                    // Add Tailwind classes for blue background, white bold text, and rounded corners
                     searchStatusEl.classList.add('bg-blue-500', 'text-white', 'font-bold', 'rounded-full', 'px-3', 'py-1', 'inline-block');
-                    // Add a loading spinner if isLoading is true
                     if (isLoading) {
-                        searchStatusEl.innerHTML = `<span class="animate-spin inline-block mr-2">🌀</span>${message}`;
+                        searchStatusEl.innerHTML = `
+                            <svg class="animate-spin -ml-1 mr-2 h-5 w-5 inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="#FFFFFF" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="#FFFFFF" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            ${message}`;
                     } else {
-                        searchStatusEl.innerHTML = message; // Remove spinner if not loading
+                        searchStatusEl.innerHTML = message;
                     }
                 } else {
                     hideElement(searchStatusEl);
-                    // Remove Tailwind classes when hidden to reset styling
                     searchStatusEl.classList.remove('bg-blue-500', 'text-white', 'font-bold', 'rounded-full', 'px-3', 'py-1', 'inline-block');
-                    searchStatusEl.innerHTML = ''; // Clear content
+                    searchStatusEl.innerHTML = '';
                 }
             }
         }
@@ -260,6 +268,7 @@
             hideElement(searchErrorMessage);
         }
         
+        // --- NWS Fetch Function ---
         async function nwsFetch(url) {
             const response = await fetch(url, {
                 headers: {
@@ -274,32 +283,6 @@
             }
             return response.json();
         }
-
-        function getDewPointDescription(dewPointF) {
-            if (dewPointF === null || isNaN(dewPointF)) return "N/A";
-            if (dewPointF < 50) return "Pleasantly Dry";
-            if (dewPointF < 55) return "Comfortable";
-            if (dewPointF < 60) return "Becoming a Bit Humid";
-            if (dewPointF < 65) return "Humid";
-            if (dewPointF < 70) return "Sticky";
-            if (dewPointF < 75) return "Muggy & Uncomfortable";
-            return "Oppressive";
-        }
-
-        // --- Footer Year ---
-        document.getElementById('current-year').textContent = new Date().getFullYear();
-
-        // --- Event Listeners ---
-        searchButton.addEventListener('click', handleSearch);
-        searchInput.addEventListener('keypress', (event) => {
-            if (event.key === 'Enter') {
-                handleSearch();
-            }
-        });
-        toggleForecastButton.addEventListener('click', () => {
-            isShowing7DayForecast = !isShowing7DayForecast;
-            displayForecast(storedForecastPeriods); 
-        }); 
 
         // --- Geocoding Function (Using OpenStreetMap Nominatim) ---
         async function geocodeLocation(query) {
@@ -335,76 +318,62 @@
             }
         }
 
-        // --- Gemini API Function for Summarization ---
-        async function summarizeAlertWithGemini(alertTextToSummarize) {
-            updateSearchStatus("Summarizing alert with Gemini...", true);
-            const prompt = `Summarize this weather alert concisely for a general audience, highlighting the main threat, affected areas, and recommended actions. Keep it under 75 words:\n\n${alertTextToSummarize}`;
-            let chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
-            const payload = { contents: chatHistory };
-            const apiKey = GEMINI_API_KEY; 
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-
-            try {
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    console.error("Gemini API Error:", errorData);
-                    throw new Error(`Gemini API request failed: ${response.status}`);
-                }
-                const result = await response.json();
-                console.log("Gemini API Raw Response:", result); 
-
-                if (result.candidates && result.candidates.length > 0 &&
-                    result.candidates[0].content && result.candidates[0].content.parts &&
-                    result.candidates[0].content.parts.length > 0) {
-                    const summary = result.candidates[0].content.parts[0].text;
-                    console.log("Gemini Summary:", summary); 
-                    updateSearchStatus("Alert summarized.", false); 
-                    setTimeout(() => updateSearchStatus(''), 2000); 
-                    return summary;
-                } else {
-                    console.warn("Gemini API response structure unexpected or content missing.", result);
-                    throw new Error("Failed to get summary from Gemini API due to unexpected response format.");
-                }
-            } catch (error) {
-                console.error("Error summarizing with Gemini:", error);
-                updateSearchStatus("Could not summarize alert.", false); 
-                setTimeout(() => updateSearchStatus(''), 2000); 
-                return "Could not generate summary. Please see full details below."; 
-            }
+        function getDewPointDescription(dewPointF) {
+            if (dewPointF === null || isNaN(dewPointF)) return "N/A";
+            if (dewPointF < 50) return "Pleasantly Dry";
+            if (dewPointF < 55) return "Comfortable";
+            if (dewPointF < 60) return "Becoming a Bit Humid";
+            if (dewPointF < 65) return "Humid";
+            if (dewPointF < 70) return "Sticky";
+            if (dewPointF < 75) return "Muggy & Uncomfortable";
+            return "Oppressive";
         }
 
+        // --- Footer Year ---
+        document.getElementById('current-year').textContent = new Date().getFullYear();
+
+        // --- Event Listeners ---
+        searchButton.addEventListener('click', () => handleSearch(null, null, null)); // Call with no args to trigger geocoding from input
+        
+        searchInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                handleSearch(null, null, null); // Trigger search based on current input value
+            }
+        });
 
         // --- Main Search Handler ---
-        async function handleSearch() {
+        async function handleSearch(lat = null, lon = null, displayName = null) {
             const query = searchInput.value.trim(); 
             clearSearchError();
+            updateSearchStatus(''); // Clear previous status messages at the start of a new search
             locationSpecificContent.forEach(hideElement); 
 
-            if (!query) {
+            if (!query && !lat) { // If no query and no pre-selected lat/lon
                 displaySearchError('Please enter a location (City, State or Zip Code).');
                 searchButton.disabled = false; 
-                updateSearchStatus('');
                 return;
             }
 
             searchButton.textContent = 'Searching...';
             searchButton.disabled = true;
-            console.log(`Search initiated for: ${query}`);
+            console.log(`Search initiated for: ${query || displayName}`);
 
             try {
-                const { lat, lon, displayName } = await geocodeLocation(query); 
-                
-                locationNameSpan.textContent = displayName;
-                console.log(`Using coordinates for ${displayName}: Lat ${lat}, Lon ${lon}`);
+                let locationData;
+                if (lat && lon && displayName) {
+                    locationData = { lat, lon, displayName };
+                    console.log(`Using pre-selected coordinates for ${displayName}: Lat ${lat}, Lon ${lon}`);
+                } else {
+                    // Only geocode if not already provided (e.g., user pressed Enter or clicked search button directly)
+                    locationData = await geocodeLocation(query);
+                    console.log(`Geocoded coordinates for ${locationData.displayName}: Lat ${locationData.lat}, Lon ${locationData.lon}`);
+                }
+
+                locationNameSpan.textContent = locationData.displayName;
                 updateSearchStatus("Fetching weather details...", true); 
 
-                const latFixed = parseFloat(lat.toFixed(4));
-                const lonFixed = parseFloat(lon.toFixed(4));
+                const latFixed = parseFloat(locationData.lat.toFixed(4));
+                const lonFixed = parseFloat(locationData.lon.toFixed(4));
 
                 const pointsUrl = `${NWS_API_BASE_URL}/points/${latFixed},${lonFixed}`;
                 const pointsData = await nwsFetch(pointsUrl);
@@ -441,7 +410,7 @@
                 
                 displayCurrentConditions(currentPeriodData, latestObservation);
                 
-                if (forecastDataResponse.properties && forecastDataResponse.properties.periods) {
+                if (forecastDataResponse.properties && forecastDataResponse.properties.periods) { 
                     console.log("Fetched new forecast data. First period name:", forecastDataResponse.properties.periods[0]?.name, "Temp:", forecastDataResponse.properties.periods[0]?.temperature); 
                     storedForecastPeriods = forecastDataResponse.properties.periods;
                     isShowing7DayForecast = false; 
@@ -453,13 +422,11 @@
                 
                 displayActualAlerts(alertsDataResponse.features); 
                 
-                embedWindyRadar(lat, lon);     
+                embedWindyRadar(locationData.lat, locationData.lon);     
                 
                 locationSpecificContent.forEach(showElement);
                 updateSearchStatus("Weather data loaded.", false);
-                setTimeout(() => updateSearchStatus(''), 3000);
-
-
+                // Keep status visible until next search
             } catch (error) {
                 console.error("Search process failed:", error);
                 displaySearchError(`${error.message}`); 
@@ -467,10 +434,9 @@
             } finally {
                 searchButton.textContent = 'Search';
                 searchButton.disabled = false;
-                if (!searchErrorMessage.textContent && searchStatusEl.textContent.includes("loaded")) {
-                    setTimeout(() => updateSearchStatus(''), 3000);
-                } else if (!searchErrorMessage.textContent) {
-                    updateSearchStatus('');
+                // Only clear status if there was an error and it's not already cleared
+                if (searchErrorMessage.textContent && searchStatusEl.textContent.includes("loaded")) {
+                     updateSearchStatus('');
                 }
             }
         }
@@ -513,7 +479,7 @@
                 if (currentPeriod.windSpeed) windSpeed = currentPeriod.windSpeed.split(' ')[0]; 
                 if (currentPeriod.windDirection) windDir = currentPeriod.windDirection;
                 if (currentPeriod.relativeHumidity && currentPeriod.relativeHumidity.value !== null) {
-                    humidity = `${currentPeriod.relativeHumidity.value}%`;
+                    humidity = `${Math.round(currentPeriod.relativeHumidity.value)}%`;
                 }
                 if (currentPeriod.dewpoint && currentPeriod.dewpoint.value !== null) {
                     dewpointC = currentPeriod.dewpoint.value; 
@@ -522,21 +488,29 @@
 
             summaryTempEl.textContent = tempF !== null ? `${tempF}°F` : 'N/A';
             summaryWindEl.textContent = (windSpeed !== 'N/A' || windDir) ? `${windSpeed} mph ${windDir}`.trim() : 'N/A';
-            summaryHumidityEl.textContent = humidity;
-
+            
             const dewpointF = dewpointC !== null && !isNaN(dewpointC) ? Math.round(dewpointC * 9/5 + 32) : null;
-            summaryDewpointValueEl.textContent = dewpointF !== null ? `${dewpointF}°F` : "N/A"; 
-            summaryDewpointDescEl.textContent = `(${getDewPointDescription(dewpointF)})`; 
+            const dewpointValueText = dewpointF !== null ? `${dewpointF}°F` : 'N/A';
+            const dewpointDescription = getDewPointDescription(dewpointF);
+
+            // Combine humidity and dew point information
+            const combinedHumidityDewpointText = `${humidity} / ${dewpointValueText} (${dewpointDescription})`;
+            summaryHumidityDewpointEl.textContent = combinedHumidityDewpointText; // Assign to the new combined element
+
 
             let feelsLikeText = 'N/A';
-            if (observation?.heatIndex?.value !== null && !isNaN(observation?.heatIndex?.value)) {
+            // Corrected logic for Feels Like: Prioritize observation data, then currentPeriod temperature
+            if (observation?.apparentTemperature?.value !== null && !isNaN(observation?.apparentTemperature?.value)) {
+                feelsLikeText = `${Math.round(observation.apparentTemperature.value * 9/5 + 32)}°F (Apparent)`;
+            } else if (observation?.heatIndex?.value !== null && !isNaN(observation?.heatIndex?.value)) {
                 feelsLikeText = `${Math.round(observation.heatIndex.value * 9/5 + 32)}°F (Heat Index)`;
             } else if (observation?.windChill?.value !== null && !isNaN(observation?.windChill?.value)) {
                 feelsLikeText = `${Math.round(observation.windChill.value * 9/5 + 32)}°F (Wind Chill)`;
             } else if (tempF !== null) { 
-                feelsLikeText = `${tempF}°F`;
+                feelsLikeText = `${tempF}°F`; // Fallback to actual temperature if no specific feels-like data
             }
             summaryFeelsLikeEl.textContent = feelsLikeText;
+
 
             summaryConditionIconEl.src = iconUrl; 
             summaryConditionIconEl.alt = conditionText;
@@ -565,7 +539,7 @@
                 return;
             }
 
-            const numDaysToDisplay = isShowing7DayForecast ? 7 : 5;
+            const numDaysToDisplay = isShowing7DayForecast ? 7 : 5; 
             toggleForecastButton.textContent = isShowing7DayForecast ? "Show 5-Day Forecast" : "Show 7-Day Forecast";
 
             if (numDaysToDisplay === 7) {
@@ -722,7 +696,6 @@
 
             document.querySelectorAll('.alert-detail-toggle').forEach(button => {
                 button.addEventListener('click', async function() { 
-                    console.log("Main alert toggle clicked"); 
                     const detailsContentId = this.dataset.targetDetailsContent;
                     const geminiSummaryTargetId = this.dataset.targetGemini;
                     const fullAlertText = decodeURIComponent(this.dataset.fullAlertText);
@@ -741,7 +714,7 @@
                         detailsContentDiv.classList.toggle('hidden'); 
                         icon.classList.toggle('rotate-90'); 
 
-                        if (isCurrentlyHidden && geminiSummaryDiv.dataset.summarized !== 'true') { // Corrected condition here
+                        if (isCurrentlyHidden && geminiSummaryDiv.dataset.summarized !== 'true') { 
                             geminiSummaryDiv.querySelector('p').textContent = 'Summarizing with Gemini...'; 
                             try {
                                 const summary = await summarizeAlertWithGemini(fullAlertText);
@@ -765,7 +738,7 @@
             
             document.querySelectorAll('.nws-text-toggle').forEach(button => {
                 button.addEventListener('click', function() {
-                    const nwsTextId = this.id.replace('nws-toggle-', 'nws-full-text-'); // Construct ID based on button
+                    const nwsTextId = this.id.replace('nws-toggle-', 'nws-full-text-'); 
                     const nwsTextDiv = document.getElementById(nwsTextId);
                     if (nwsTextDiv) {
                         nwsTextDiv.classList.toggle('hidden');
@@ -777,16 +750,22 @@
 
 
         function embedWindyRadar(lat, lon) {
-            const zoomLevel = 7; 
-            const radarUrl = `https://embed.windy.com/embed2.html?lat=${lat}&lon=${lon}&zoom=${zoomLevel}&layer=radar&menuDisable=true&messageDisable=true&markerDisable=true&calendar=now&pressureDisable=true&type=map&location=coordinates&detailDisable=true&metricWind=mph&metricTemp=%C2%B0F&radarRange=-1`;
-            windyRadarContainer.innerHTML = `<iframe width="100%" height="100%" src="${radarUrl}" frameborder="0" allowfullscreen></iframe>`;
+            // Increased zoom level for a more localized view
+            const zoomLevel = 12; // Increased zoom level to 12 for even closer view
+            const width = "100%"; 
+            const height = "450px"; 
+
+            // Updated Windy.com embed URL parameters to include marker and use your provided parameters
+            const radarUrl = `https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=default&metricTemp=default&metricWind=default&zoom=${zoomLevel}&overlay=radar&product=radar&level=surface&lat=${lat}&lon=${lon}&menuDisable=true&messageDisable=true&markerDisable=false&calendar=now&pressureDisable=true&detailDisable=true`;
+            
+            windyRadarContainer.innerHTML = `<iframe width="${width}" height="${height}" src="${radarUrl}" frameborder="0" allowfullscreen></iframe>`;
         }
 
         function displayMockNews() { 
             newsContentArea.innerHTML = ''; 
             const mockNewsItems = [
                 { headline: "Major Storm System Developing in the Midwest", summary: "Forecasters are tracking a significant weather system...", source: "NWS Weather Brief", date: "June 3, 2025" },
-                { headline: "Heat Advisory Issued for Southwestern States", summary: "Temperatures are expected to soar above 100°F...", source: "Local Weather Channel", date: "June 2, 2025" },
+                { headline: "Heat Advisory Issued for Southwestern States", summary: "Temperatures are expected to soar above 100°F...", source: "Local Weather Channel", date: "June 3, 2025" },
                 { headline: "Tropical Update: Watching Area of Interest", summary: "Meteorologists are monitoring a tropical wave...", source: "National Hurricane Center", date: "June 3, 2025" }
             ];
             mockNewsItems.forEach(item => {
@@ -796,7 +775,7 @@
                         <p class="text-sm text-gray-600 mt-1">${item.summary}</p>
                         <p class="text-xs text-gray-400 mt-1">${item.source} - ${item.date}</p>
                     </article>`;
-                newsContentArea.insertAdjacentHTML('beforeend', newsHTML);
+                newsContentArea.insertAdjacentHTML("beforeend", newsHTML);
             });
         }
         
