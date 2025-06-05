@@ -164,12 +164,7 @@
             </div>
         </section>
 
-        <section id="radar-embed-card" class="card">
-            <h2 class="text-2xl font-semibold mb-4 text-gray-700">Weather Radar <span class="text-sm text-gray-500">(Powered by Windy.com)</span></h2>
-            <div id="windy-radar-container" class="w-full h-[300px] sm:h-[400px] md:h-[500px] bg-gray-200 rounded-md flex items-center justify-center overflow-hidden">
-                <p class="text-gray-500">Radar will load here once a location is searched.</p>
-            </div>
-        </section>
+        <!-- Removed Radar Embed Card -->
 
     </main>
 
@@ -181,7 +176,6 @@
         // --- API Configuration ---
         const NWS_API_BASE_URL = "https://api.weather.gov";
         const NWS_USER_AGENT = "(jWeather App, your.email@example.com)"; 
-        const GEMINI_API_KEY = ""; // IMPORTANT: Handled by Canvas environment for gemini-2.0-flash. Leave empty.
 
         // --- DOM Element References ---
         const searchInput = document.getElementById('location-search-input');
@@ -196,7 +190,6 @@
         const summaryTempEl = document.getElementById('summary-temp');
         const summaryFeelsLikeEl = document.getElementById('summary-feels-like'); 
         const summaryWindEl = document.getElementById('summary-wind');
-        const summaryHumidityEl = document.getElementById('summary-humidity');
         const summaryHumidityDewpointEl = document.getElementById('summary-humidity-dewpoint');
 
         const searchErrorMessage = document.getElementById('search-error-message');
@@ -208,17 +201,13 @@
         const forecastContentArea = document.getElementById('forecast-content-area');
         const toggleForecastButton = document.getElementById('toggle-forecast-days');
 
-        const radarCard = document.getElementById('radar-embed-card'); 
-        const windyRadarContainer = document.getElementById('windy-radar-container');
-
         const newsCard = document.getElementById('weather-news-card'); 
         const newsContentArea = document.getElementById('news-content-area');
 
         const locationSpecificContent = [
             currentConditionsDisplay, 
             activeAlertsCard,    
-            weatherForecastCard,   
-            radarCard            
+            weatherForecastCard            
         ];
 
         // --- State Variables ---
@@ -420,9 +409,7 @@
                     throw new Error("Forecast data is not available or in unexpected format.");
                 }
                 
-                displayActualAlerts(alertsDataResponse.features); 
-                
-                embedWindyRadar(locationData.lat, locationData.lon);     
+                displayActualAlerts(alertsDataResponse.features);     
                 
                 locationSpecificContent.forEach(showElement);
                 updateSearchStatus("Weather data loaded.", false);
@@ -540,7 +527,7 @@
             }
 
             const numDaysToDisplay = isShowing7DayForecast ? 7 : 5; 
-            toggleForecastButton.textContent = isShowing7DayForecast ? "Show 5-Day Forecast" : "Show 7-Day Forecast";
+            toggleForecastButton.textContent = isShowing7DayForecast ? "Show 7-Day Forecast" : "Show 5-Day Forecast";
 
             if (numDaysToDisplay === 7) {
                 forecastContentArea.className = 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3';
@@ -748,18 +735,7 @@
             });
         }
 
-
-        function embedWindyRadar(lat, lon) {
-            // Increased zoom level for a more localized view
-            const zoomLevel = 12; // Increased zoom level to 12 for even closer view
-            const width = "100%"; 
-            const height = "450px"; 
-
-            // Updated Windy.com embed URL parameters to include marker and use your provided parameters
-            const radarUrl = `https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=default&metricTemp=default&metricWind=default&zoom=${zoomLevel}&overlay=radar&product=radar&level=surface&lat=${lat}&lon=${lon}&menuDisable=true&messageDisable=true&markerDisable=false&calendar=now&pressureDisable=true&detailDisable=true`;
-            
-            windyRadarContainer.innerHTML = `<iframe width="${width}" height="${height}" src="${radarUrl}" frameborder="0" allowfullscreen></iframe>`;
-        }
+        // Removed embedWindyRadar function and related references
 
         function displayMockNews() { 
             newsContentArea.innerHTML = ''; 
